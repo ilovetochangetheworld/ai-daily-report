@@ -6,62 +6,66 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
+
+// dotenv 只在本地开发时使用（CI 通过环境变量直接设置）
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.join(__dirname, '../.env');
+if (fs.existsSync(envPath)) {
+    const { default: dotenv } = await import('dotenv');
+    dotenv.config({ path: envPath });
+    console.log('✓ 已加载 .env 文件');
+} else {
+    console.log('✓ 使用环境变量（CI 模式）');
+}
+
 import { fetchAll } from './fetchers/index.js';
 import { aggregate } from './aggregator.js';
 import { runPipeline } from './pipeline/orchestrator.js';
-import { saveReport } from './renderer.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// 加载环境变量
-dotenv.config({ path: path.join(__dirname, '../.env') });
-
-const DATE = new Date().toISOString().split('T')[0];
+import { saveReport, generateIndex, generateZhIndex } from './renderer.js';
 
 async function main() {
-    console.log(`=== AI 日报生成器 · ${DATE} ===\n`);
+    // 日期
+    const date = new Date().toISOString().split('T')[0];
+    console.log(`\n🤖 AI 日报生成器 - ${date}\n`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    // 1. 抓取所有数据源
-    console.log('📡 开始抓取数据源...');
-    const signals = await fetchAll();
-    
-    if (!signals || signals.length === 0) {
-        console.error('✗ 没有抓取到任何数据，退出');
-        process.exit(1);
+    // 步骤 1: 抓取数据
+    console.log('\n📡 步骤 1/4: 抓取数据源...');
+    const rawData = await fetchAll();
+    const totalItems = Object.values(rawData).reduce((sum, arr) => sum + arr.length, 0);
+    console.log(`  ✓ 共抓取 ${totalItems} 条数据`);
+
+    // 步骤 2: 聚合 & 去重 & 打分
+    console.log('\n🔄 步骤 2/4: 聚合 & 去重 & 打分...');
+    const signals = aggregate(rawData);
+    console.log(`  ✓ 聚合后 ${signals.length} 条信号`);
+
+    // 步骤 3: 多 Agent 分析
+    console.log('\n🧠 步骤 3/4: 多 Agent 分析管道...');
+    const reports = await runPipeline({ date, signals });
+
+    // 步骤 4: 渲染 & 保存
+    console.log('\n📄 步骤 4/4: 渲染 & 保存...');
+    const zhPath = saveReport(reports.zh.markdown, 'zh', date);
+    console.log(`  ✓ 中文日报: ${zhPath}`);
+
+    const enPath = saveReport(reports.en.markdown, 'en', date);
+    console.log(`  ✓ English Daily: ${enPath}`);
+
+    // 生成索引页
+    try {
+        generateIndex();
+        generateZhIndex();
+    } catch (e) {
+        console.log(`  ⚠ 索引页生成跳过: ${e.message}`);
     }
-    console.log(`✓ 共抓取 ${signals.length} 条原始信号\n`);
 
-    // 2. 聚合去重
-    console.log('🔄 数据聚合与去重...');
-    const ranked = aggregate(signals);
-    console.log(`✓ 聚合后共 ${ranked.length} 条唯一信号\n`);
-
-    // 3. 多 Agent 分析管道
-    console.log('🤖 启动多 Agent 分析管道...\n');
-    const reports = await runPipeline({
-        date: DATE,
-        signals: ranked,
-    });
-
-    // 4. 保存报告
-    console.log('\n💾 保存日报...');
-    for (const [lang, result] of Object.entries(reports)) {
-        if (!result || !result.markdown) {
-            console.warn(`⚠ [${lang}] 输出为空，跳过保存`);
-            continue;
-        }
-        
-        const outputPath = saveReport(result.markdown, lang, DATE);
-        const relativePath = path.relative(__dirname + '/..', outputPath);
-        console.log(`✓ [${lang}] 已保存到 ${relativePath}`);
-    }
-
-    console.log('\n✅ 日报生成完成！');
+    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`✅ AI 日报生成完成！ ${date}\n`);
 }
 
-main().catch(error => {
-    console.error('❌ 发生错误:', error);
+main().catch(err => {
+    console.error('❌ 生成失败:', err);
     process.exit(1);
 });

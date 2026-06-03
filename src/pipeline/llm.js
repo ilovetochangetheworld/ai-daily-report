@@ -1,16 +1,9 @@
 /**
  * LLM 调用封装
- * 支持任何 OpenAI 兼容 API
+ * 支持任何 OpenAI 兼容 API（腾讯云 GLM 等）
  */
 
 import OpenAI from 'openai';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 /**
  * 创建 OpenAI 客户端（兼容任何 OpenAI 兼容 API）
@@ -38,7 +31,7 @@ function createClient() {
  */
 export async function callLLM(systemPrompt, userPrompt, options = {}) {
     const {
-        model = process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
+        model = process.env.OPENAI_MODEL || 'GLM-5.1',
         temperature = 0.7,
         maxTokens = 4000,
         retryCount = 3,
@@ -100,7 +93,6 @@ export async function callLLMJson(systemPrompt, userPrompt, options = {}) {
  * 估算 token 数量（粗略）
  */
 export function estimateTokens(text) {
-    // 简单估算：1 token ≈ 4 字符（英文）或 1.5 字符（中文）
     const chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
     const otherChars = text.length - chineseChars;
     return Math.ceil(chineseChars / 1.5 + otherChars / 4);
