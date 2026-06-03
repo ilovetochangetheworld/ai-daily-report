@@ -4,7 +4,7 @@
 
 # Node
 node_modules/
-package-lock.json
+# package-lock.json — CI needs this, do NOT ignore
 
 # Output (will be committed by GitHub Actions)
 # zh/
