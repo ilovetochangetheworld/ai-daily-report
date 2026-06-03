@@ -1,33 +1,24 @@
 /**
  * Reddit 抓取器
- * 抓取多个 AI 相关 subreddit 的热门帖子
  */
 
-import axios from 'axios';
-import { BaseFetcher } from './base.js';
+const axios = require('axios');
+const { BaseFetcher } = require('./base');
 
-export class RedditFetcher extends BaseFetcher {
+class RedditFetcher extends BaseFetcher {
     constructor() {
         super('Reddit');
         this.client = axios.create({
             baseURL: 'https://www.reddit.com',
             timeout: 10000,
             headers: {
-                'User-Agent': 'AIDailyReport/1.0 (by /u/your_username)',
+                'User-Agent': 'AIDailyReport/1.0',
             },
         });
         
-        // AI 相关 subreddit
         this.subreddits = [
-            'MachineLearning',
-            'artificial',
-            'OpenAI',
-            'LanguageTechnology',
-            'ComputerVision',
-            'deeplearning',
-            'LocalLLaMA',
-            'ChatGPT',
-            'ClaudeAI',
+            'MachineLearning', 'artificial', 'OpenAI', 'LanguageTechnology',
+            'ComputerVision', 'deeplearning', 'LocalLLaMA', 'ChatGPT', 'ClaudeAI',
         ];
     }
 
@@ -43,10 +34,9 @@ export class RedditFetcher extends BaseFetcher {
                 const posts = response.data?.data?.children || [];
                 
                 for (const { data: post } of posts) {
-                    if (post.score < 30) continue; // 过滤低分帖子
-                    if (post.stickied) continue; // 跳过置顶帖
+                    if (post.score < 30) continue;
+                    if (post.stickied) continue;
                     
-                    // 检查是否与 AI 相关（标题或正文）
                     const isAI = this._isAIRelated(post.title, post.selftext);
                     if (!isAI) continue;
                     
@@ -76,9 +66,6 @@ export class RedditFetcher extends BaseFetcher {
         return signals;
     }
 
-    /**
-     * 判断帖子是否与 AI 相关
-     */
     _isAIRelated(title, text) {
         const aiKeywords = [
             'ai', 'llm', 'gpt', 'claude', 'gemini', 'model', 'training',
@@ -86,8 +73,9 @@ export class RedditFetcher extends BaseFetcher {
             'anthropic', 'openai', 'hugging face', 'agent', 'rag', 'embedding',
             'fine-tuning', 'prompt', 'chatbot', 'machine learning',
         ];
-        
         const content = `${title} ${text || ''}`.toLowerCase();
         return aiKeywords.some(kw => content.includes(kw));
     }
 }
+
+module.exports = { RedditFetcher };

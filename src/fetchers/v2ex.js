@@ -1,12 +1,11 @@
 /**
  * V2EX 抓取器
- * 抓取 V2EX 热门主题（中文技术社区）
  */
 
-import axios from 'axios';
-import { BaseFetcher } from './base.js';
+const axios = require('axios');
+const { BaseFetcher } = require('./base');
 
-export class V2EXFetcher extends BaseFetcher {
+class V2EXFetcher extends BaseFetcher {
     constructor() {
         super('V2EX');
         this.client = axios.create({
@@ -22,12 +21,10 @@ export class V2EXFetcher extends BaseFetcher {
         const signals = [];
         
         try {
-            // V2EX API: 获取最新主题
             const response = await this.client.get('/api/topics/hot.json');
             const topics = response.data || [];
             
             for (const topic of topics) {
-                // 检查是否与 AI 相关
                 const isAI = this._isAIRelated(topic.title, topic.content || '');
                 if (!isAI) continue;
                 
@@ -56,9 +53,6 @@ export class V2EXFetcher extends BaseFetcher {
         return signals;
     }
 
-    /**
-     * 判断主题是否与 AI 相关
-     */
     _isAIRelated(title, content) {
         const aiKeywords = [
             'ai', '人工智能', '机器学习', '深度学习', '神经网络',
@@ -66,8 +60,9 @@ export class V2EXFetcher extends BaseFetcher {
             '模型', '训练', '推理', 'agent', '智能体',
             'huggingface', 'transformer', 'diffusion',
         ];
-        
         const text = `${title} ${content || ''}`.toLowerCase();
         return aiKeywords.some(kw => text.includes(kw));
     }
 }
+
+module.exports = { V2EXFetcher };

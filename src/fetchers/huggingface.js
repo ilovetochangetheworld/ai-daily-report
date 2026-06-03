@@ -1,12 +1,11 @@
 /**
  * Hugging Face 抓取器
- * 抓取最近 7 天热门模型和数据集
  */
 
-import axios from 'axios';
-import { BaseFetcher } from './base.js';
+const axios = require('axios');
+const { BaseFetcher } = require('./base');
 
-export class HuggingFaceFetcher extends BaseFetcher {
+class HuggingFaceFetcher extends BaseFetcher {
     constructor() {
         super('HuggingFace');
         this.client = axios.create({
@@ -22,7 +21,6 @@ export class HuggingFaceFetcher extends BaseFetcher {
         const signals = [];
         
         try {
-            // 抓取热门模型（按点赞数排序）
             const modelsResponse = await this.client.get('/api/models', {
                 params: {
                     sort: 'likes',
@@ -33,12 +31,10 @@ export class HuggingFaceFetcher extends BaseFetcher {
             });
 
             const models = modelsResponse.data || [];
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             
             for (const model of models.slice(0, 15)) {
-                // 检查模型是否最近更新（7天内）
                 const lastModified = new Date(model.lastModified);
-                const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                
                 if (lastModified < sevenDaysAgo) continue;
                 
                 signals.push({
@@ -65,7 +61,6 @@ export class HuggingFaceFetcher extends BaseFetcher {
         }
 
         try {
-            // 抓取热门数据集
             const datasetsResponse = await this.client.get('/api/datasets', {
                 params: {
                     sort: 'likes',
@@ -75,11 +70,10 @@ export class HuggingFaceFetcher extends BaseFetcher {
             });
 
             const datasets = datasetsResponse.data || [];
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             
             for (const dataset of datasets.slice(0, 10)) {
                 const lastModified = new Date(dataset.lastModified);
-                const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                
                 if (lastModified < sevenDaysAgo) continue;
                 
                 signals.push({
@@ -87,7 +81,7 @@ export class HuggingFaceFetcher extends BaseFetcher {
                     title: dataset.id,
                     url: `https://huggingface.co/datasets/${dataset.id}`,
                     source: 'huggingface',
-                    category: 'paper', // 数据集归类为paper类
+                    category: 'paper',
                     published_date: dataset.lastModified || new Date().toISOString(),
                     score: dataset.likes || 0,
                     summary: dataset.description || '',
@@ -107,3 +101,5 @@ export class HuggingFaceFetcher extends BaseFetcher {
         return signals;
     }
 }
+
+module.exports = { HuggingFaceFetcher };

@@ -1,17 +1,8 @@
 /**
- * 生成索引页（ESM 模块，供 GitHub Actions 调用）
+ * 生成索引页（供 GitHub Actions 调用）
  */
 
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const OUTPUT_BASE = path.join(__dirname, '..');
-
-// 动态导入 renderer
-const { generateIndex, generateZhIndex } = await import('../src/renderer.js');
+const { generateIndex, generateZhIndex } = require('../src/renderer');
 
 try {
     generateIndex();

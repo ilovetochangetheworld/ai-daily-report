@@ -1,12 +1,11 @@
 /**
  * Product Hunt 抓取器
- * 抓取当日热门产品（votes > 50）
  */
 
-import axios from 'axios';
-import { BaseFetcher } from './base.js';
+const axios = require('axios');
+const { BaseFetcher } = require('./base');
 
-export class ProductHuntFetcher extends BaseFetcher {
+class ProductHuntFetcher extends BaseFetcher {
     constructor() {
         super('Product Hunt');
         this.client = axios.create({
@@ -29,7 +28,6 @@ export class ProductHuntFetcher extends BaseFetcher {
         }
 
         try {
-            // GraphQL 查询当日热门产品
             const query = `
                 query {
                     posts(order: VOTES_COUNT, first: 20) {
@@ -62,9 +60,8 @@ export class ProductHuntFetcher extends BaseFetcher {
             const posts = response.data?.data?.posts?.edges || [];
             
             for (const { node: post } of posts) {
-                if (post.votesCount < 50) continue; // 过滤低票数
+                if (post.votesCount < 50) continue;
                 
-                // 检查是否与 AI 相关
                 const isAI = this._isAIRelated(post);
                 if (!isAI) continue;
                 
@@ -92,25 +89,11 @@ export class ProductHuntFetcher extends BaseFetcher {
         return signals;
     }
 
-    /**
-     * 判断产品是否与 AI 相关
-     */
     _isAIRelated(post) {
-        const aiTopics = [
-            'artificial-intelligence', 'machine-learning', 'deep-learning',
-            'nlp', 'computer-vision', 'ai-assistant', 'llm', 'gpt',
-            'automation', 'productivity', 'developer-tools',
-        ];
-        
-        const topics = post.topics?.edges?.map(e => e.node.name.toLowerCase()) || [];
-        const text = `${post.name} ${post.tagline} ${post.description}`.toLowerCase();
-        
-        // 通过话题判断
-        const hasAITopic = topics.some(t => aiTopics.includes(t));
-        if (hasAITopic) return true;
-        
-        // 通过关键词判断
         const aiKeywords = ['ai', 'llm', 'gpt', 'agent', 'smart', 'intelligent', 'automation'];
+        const text = `${post.name} ${post.tagline} ${post.description || ''}`.toLowerCase();
         return aiKeywords.some(kw => text.includes(kw));
     }
 }
+
+module.exports = { ProductHuntFetcher };

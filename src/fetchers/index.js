@@ -2,15 +2,15 @@
  * 统一导出所有抓取器
  */
 
-import { HackerNewsFetcher } from './hackernews.js';
-import { GitHubTrendingFetcher } from './github-trending.js';
-import { ProductHuntFetcher } from './producthunt.js';
-import { RedditFetcher } from './reddit.js';
-import { HuggingFaceFetcher } from './huggingface.js';
-import { V2EXFetcher } from './v2ex.js';
-import { GoogleTrendsFetcher } from './google-trends.js';
+const { HackerNewsFetcher } = require('./hackernews');
+const { GitHubTrendingFetcher } = require('./github-trending');
+const { ProductHuntFetcher } = require('./producthunt');
+const { RedditFetcher } = require('./reddit');
+const { HuggingFaceFetcher } = require('./huggingface');
+const { V2EXFetcher } = require('./v2ex');
+const { GoogleTrendsFetcher } = require('./google-trends');
 
-export const ALL_FETCHERS = [
+const ALL_FETCHERS = [
     HackerNewsFetcher,
     GitHubTrendingFetcher,
     ProductHuntFetcher,
@@ -20,12 +20,7 @@ export const ALL_FETCHERS = [
     GoogleTrendsFetcher,
 ];
 
-/**
- * 并发抓取所有数据源
- * @param {import('axios').AxiosInstance} client - HTTP 客户端（可选）
- * @returns {Promise<Array<Signal>>} 所有信号
- */
-export async function fetchAll() {
+async function fetchAll() {
     const fetcherInstances = ALL_FETCHERS.map(FetcherClass => new FetcherClass());
     
     const results = await Promise.allSettled(
@@ -41,3 +36,5 @@ export async function fetchAll() {
 
     return allSignals;
 }
+
+module.exports = { ALL_FETCHERS, fetchAll };

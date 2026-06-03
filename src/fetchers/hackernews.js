@@ -1,12 +1,11 @@
 /**
  * Hacker News 抓取器
- * 抓取过去24小时内的热门 AI 相关故事（points > 20）
  */
 
-import axios from 'axios';
-import { BaseFetcher } from './base.js';
+const axios = require('axios');
+const { BaseFetcher } = require('./base');
 
-export class HackerNewsFetcher extends BaseFetcher {
+class HackerNewsFetcher extends BaseFetcher {
     constructor() {
         super('Hacker News');
         this.client = axios.create({
@@ -15,9 +14,6 @@ export class HackerNewsFetcher extends BaseFetcher {
         });
     }
 
-    /**
-     * 搜索 AI 相关关键词
-     */
     async fetch() {
         const signals = [];
         const keywords = [
@@ -26,10 +22,9 @@ export class HackerNewsFetcher extends BaseFetcher {
             'OpenAI OR Anthropic OR DeepMind',
         ];
 
-        // 获取过去24小时的时间戳
         const now = new Date();
         const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const numericDate = parseInt(yesterday.toISOString().split('T')[0].replace(/-/g, ''));
+        const numericDate = Math.floor(yesterday.getTime() / 1000);
 
         for (const query of keywords) {
             try {
@@ -46,7 +41,7 @@ export class HackerNewsFetcher extends BaseFetcher {
                 const hits = response.data.hits || [];
                 
                 for (const hit of hits) {
-                    if (hit.points < 20) continue; // 过滤低分内容
+                    if (hit.points < 20) continue;
                     
                     signals.push({
                         id: `hn-${hit.objectID}`,
@@ -67,7 +62,6 @@ export class HackerNewsFetcher extends BaseFetcher {
             }
         }
 
-        // 去重（相同 URL）
         const unique = new Map();
         for (const signal of signals) {
             const key = signal.url || signal.id;
@@ -79,3 +73,5 @@ export class HackerNewsFetcher extends BaseFetcher {
         return Array.from(unique.values());
     }
 }
+
+module.exports = { HackerNewsFetcher };

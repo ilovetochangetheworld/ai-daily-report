@@ -1,13 +1,9 @@
 /**
- * LLM 调用封装
- * 支持任何 OpenAI 兼容 API（腾讯云 GLM 等）
+ * LLM 调用封装 - 支持任何 OpenAI 兼容 API
  */
 
-import OpenAI from 'openai';
+const OpenAI = require('openai');
 
-/**
- * 创建 OpenAI 客户端（兼容任何 OpenAI 兼容 API）
- */
 function createClient() {
     const apiKey = process.env.OPENAI_API_KEY;
     const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
@@ -16,20 +12,10 @@ function createClient() {
         throw new Error('OPENAI_API_KEY 未设置');
     }
 
-    return new OpenAI({
-        apiKey,
-        baseURL,
-    });
+    return new OpenAI({ apiKey, baseURL });
 }
 
-/**
- * 调用 LLM（带重试）
- * @param {string} systemPrompt - 系统提示词
- * @param {string} userPrompt - 用户提示词
- * @param {object} options - 可选参数
- * @returns {Promise<string>} LLM 响应文本
- */
-export async function callLLM(systemPrompt, userPrompt, options = {}) {
+async function callLLM(systemPrompt, userPrompt, options = {}) {
     const {
         model = process.env.OPENAI_MODEL || 'GLM-5.1',
         temperature = 0.7,
@@ -54,24 +40,14 @@ export async function callLLM(systemPrompt, userPrompt, options = {}) {
             return response.choices[0]?.message?.content || '';
         } catch (error) {
             console.error(`LLM 调用失败 (尝试 ${attempt}/${retryCount}):`, error.message);
-            
-            if (attempt === retryCount) {
-                throw error;
-            }
-            
-            // 指数退避
+            if (attempt === retryCount) throw error;
             await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
         }
     }
 }
 
-/**
- * 调用 LLM 并解析 JSON 响应
- */
-export async function callLLMJson(systemPrompt, userPrompt, options = {}) {
+async function callLLMJson(systemPrompt, userPrompt, options = {}) {
     const response = await callLLM(systemPrompt, userPrompt, options);
-    
-    // 提取 JSON（可能包含在 markdown code block 中）
     const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) ||
                      response.match(/\{[\s\S]*\}/) ||
                      response.match(/\[[\s\S]*\]/);
@@ -89,11 +65,4 @@ export async function callLLMJson(systemPrompt, userPrompt, options = {}) {
     }
 }
 
-/**
- * 估算 token 数量（粗略）
- */
-export function estimateTokens(text) {
-    const chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
-    const otherChars = text.length - chineseChars;
-    return Math.ceil(chineseChars / 1.5 + otherChars / 4);
-}
+module.exports = { callLLM, callLLMJson };
