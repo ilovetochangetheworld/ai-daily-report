@@ -1,0 +1,73 @@
+name: AI Daily Report
+
+on:
+  schedule:
+    # 每天 8:00 UTC = 北京时间 16:00
+    - cron: '0 8 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+permissions:
+  contents: write
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史，用于 git pull
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm install
+
+      - name: 🔧 Setup environment
+        run: |
+          cat > .env << EOF
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL=${{ secrets.OPENAI_BASE_URL || 'https://api.openai.com/v1' }}
+          OPENAI_MODEL=${{ secrets.OPENAI_MODEL || 'gpt-4-turbo-preview' }}
+          PRODUCT_HUNT_TOKEN=${{ secrets.PRODUCT_HUNT_TOKEN || '' }}
+          EOF
+
+      - name: 🚀 Generate AI Daily Report
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          PRODUCT_HUNT_TOKEN: ${{ secrets.PRODUCT_HUNT_TOKEN }}
+        run: npm start
+
+      - name: 📊 Generate index pages
+        run: |
+          node -e "
+          const { generateIndex, generateZhIndex } = require('./src/renderer.js');
+          generateIndex();
+          generateZhIndex();
+          "
+
+      - name: 📤 Commit and push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add zh/ en/ index.html
+          git diff --staged --quiet || (git commit -m "🤖 AI 日报 - $(date +%Y-%m-%d)" && git push)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📦 Upload artifacts (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-report-${{ github.run_number }}
+          path: |
+            zh/
+            en/
+          retention-days: 30
