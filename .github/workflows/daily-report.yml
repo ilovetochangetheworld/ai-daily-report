@@ -2,9 +2,8 @@ name: AI Daily Report
 
 on:
   schedule:
-    # 每天 UTC 0:00 = 北京时间 8:00
     - cron: '0 0 * * *'
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -31,6 +30,10 @@ jobs:
         run: npm ci
 
       - name: 🔍 List available models (debug)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
         run: node scripts/list-models.js
 
       - name: 🚀 Generate AI Daily Report
