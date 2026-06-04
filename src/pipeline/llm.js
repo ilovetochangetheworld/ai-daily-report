@@ -6,7 +6,7 @@ const OpenAI = require('openai');
 
 function createClient() {
     const apiKey = process.env.OPENAI_API_KEY;
-    const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+    const baseURL = process.env.OPENAI_BASE_URL || 'https://api.lkeap.cloud.tencent.com/plan/v3';
     
     if (!apiKey) {
         throw new Error('OPENAI_API_KEY 未设置');
