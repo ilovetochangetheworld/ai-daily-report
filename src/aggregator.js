@@ -25,7 +25,21 @@ function aggregate(signals) {
     let uniqueSignals = Array.from(uniqueMap.values());
     uniqueSignals.sort((a, b) => (b.score || 0) - (a.score || 0));
 
-    const categorized = { news: [], project: [], paper: [], discussion: [], trends: [] };
+    // 与7维度对齐的分类
+    const categorized = {
+        product: [],
+        research: [],
+        industry: [],
+        opensource: [],
+        social: [],
+        coding: [],
+        discovery: [],
+        news: [],
+        project: [],
+        paper: [],
+        discussion: [],
+        trends: [],
+    };
     for (const signal of uniqueSignals) {
         const category = signal.category || 'discussion';
         if (categorized[category]) {
@@ -35,12 +49,20 @@ function aggregate(signals) {
         }
     }
 
+    // 从各分类取 Top N
     const topSignals = [
+        ...categorized.product.slice(0, 10),
+        ...categorized.research.slice(0, 10),
+        ...categorized.industry.slice(0, 10),
+        ...categorized.opensource.slice(0, 10),
+        ...categorized.coding.slice(0, 10),
+        ...categorized.social.slice(0, 10),
         ...categorized.trends.slice(0, 10),
         ...categorized.news.slice(0, 15),
-        ...categorized.project.slice(0, 20),
-        ...categorized.paper.slice(0, 10),
-        ...categorized.discussion.slice(0, 15),
+        ...categorized.project.slice(0, 15),
+        ...categorized.paper.slice(0, 8),
+        ...categorized.discussion.slice(0, 10),
+        ...categorized.discovery.slice(0, 10),
     ];
 
     const finalMap = new Map();
@@ -53,7 +75,7 @@ function aggregate(signals) {
 
     return Array.from(finalMap.values())
         .sort((a, b) => (b.score || 0) - (a.score || 0))
-        .slice(0, 60);
+        .slice(0, 70);
 }
 
 function normalizeUrl(url) {
@@ -89,6 +111,7 @@ function extractKeywords(text) {
         'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
         'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
         'this', 'that', 'these', 'those', 'it', 'its', 'they', 'them', 'their',
+        '的', '了', '在', '是', '和', '与', '对', '被', '将', '也',
     ]);
     const words = text
         .toLowerCase()

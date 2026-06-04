@@ -18,18 +18,7 @@
         .nav-zh:hover { background: #1f6feb44; }
         .nav-en { background: #f7816622; color: #f78166; border: 1px solid #f7816644; }
         .nav-en:hover { background: #f7816644; }
-        .latest { margin-top: 48px; }
-        .latest h2 { font-size: 1.4em; margin-bottom: 20px; color: #e6edf3; border-bottom: 1px solid #21262d; padding-bottom: 12px; }
-        .report-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin-bottom: 20px; transition: border-color .2s; }
-        .report-card:hover { border-color: #58a6ff; }
-        .report-card .date { color: #8b949e; font-size: 0.9em; margin-bottom: 8px; }
-        .report-card h3 { color: #e6edf3; margin-bottom: 10px; font-size: 1.15em; }
-        .report-card blockquote { border-left: 3px solid #1f6feb; padding-left: 14px; color: #8b949e; margin: 12px 0; font-size: 0.95em; }
-        .report-card .links { margin-top: 14px; }
-        .report-card .links a { color: #58a6ff; text-decoration: none; font-size: 0.9em; margin-right: 16px; }
-        .report-card .links a:hover { text-decoration: underline; }
-        .sources { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-        .sources span { background: #21262d; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; color: #8b949e; }
+        .section-title { font-size: 1.4em; margin-bottom: 20px; color: #e6edf3; border-bottom: 1px solid #21262d; padding-bottom: 12px; }
         footer { text-align: center; margin-top: 60px; padding: 24px 0; border-top: 1px solid #21262d; color: #484f58; font-size: 0.85em; }
         footer a { color: #58a6ff; text-decoration: none; }
     </style>
@@ -38,36 +27,12 @@
 <div class="container">
     <div class="hero">
         <h1>🤖 <span>AI 日报</span></h1>
-        <p>每日自动聚合全球 AI 行业动态，发现机会、追踪趋势、洞察竞争</p>
+        <p>每日自动聚合全球 AI 行业动态 — 产品更新、前沿研究、开源项目、AI Coding、社媒热议、行业展望</p>
     </div>
-
     <div class="nav-links">
         <a class="nav-zh" href="./zh/">📥 中文日报</a>
         <a class="nav-en" href="./en/">🇬🇧 English Daily</a>
     </div>
-
-    <div class="latest">
-        <h2>📰 最新日报</h2>
-
-        <div class="report-card">
-            <div class="date">2026-06-03</div>
-            <h3>AI 日报 2026-06-03</h3>
-            <blockquote>
-                📍 今日 Top 3 信号<br>
-                1. 🔥 高置信度：Hacker News 热议「Local LLM 部署工具」获得 347 票<br>
-                2. 📈 外部发现：「AI agent 框架」Google Trends 7 日搜索上涨 +120%<br>
-                3. ✅ 双重验证：GitHub Trending 和 Reddit 同时讨论「llama.cpp 新优化」
-            </blockquote>
-            <div class="links">
-                <a href="./zh/2026/2026-06-03.md">📄 中文版</a>
-                <a href="./en/today.md">📄 English</a>
-            </div>
-            <div class="sources">
-                <span>Hacker News</span><span>GitHub Trending</span><span>Product Hunt</span><span>Reddit</span><span>Hugging Face</span><span>V2EX</span><span>Google Trends</span>
-            </div>
-        </div>
-    </div>
-
     <footer>
         自动生成 by <a href="https://github.com/ilovetochangetheworld/ai-daily-report">AI Daily Report</a> · Powered by GitHub Actions
     </footer>

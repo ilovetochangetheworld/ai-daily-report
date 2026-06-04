@@ -1,21 +1,46 @@
-# AI 日报系统
+# 🤖 AI 资讯日报
 
-🤖 自动生成的 AI 行业日报，基于 Node.js + GitHub Actions
+每日自动生成的 AI 行业日报，基于 Node.js + GitHub Actions
 
-## 功能特性
+## 栏目结构
 
-- ✅ **多数据源聚合**：Hacker News、GitHub Trending、Product Hunt、Reddit、HuggingFace、V2EX、Google Trends
-- ✅ **双语输出**：同时生成中文和英文日报
-- ✅ **多维度分析**：发现机会 / 技术选型 / 竞争情报 / 需求雷达 / 趋势判断
-- ✅ **自动发布**：GitHub Pages 静态网站 + 小红书（待实现）
-- ✅ **定时调度**：每天 8:00 自动运行（GitHub Actions）
+每日日报包含以下栏目：
+
+| 栏目 | 说明 |
+|------|------|
+| 🚀 产品与功能更新 | 新模型发布、产品迭代、API 更新、定价变化 |
+| 🔬 前沿研究 | 最新论文、算法突破、训练方法创新 |
+| 🌍 行业展望与社会影响 | 融资/并购/IPO、政策法规、伦理争议、就业影响 |
+| ⭐ 开源 TOP 项目 | GitHub 热门项目、重大版本发布、社区动态 |
+| 💬 社媒分享 | 大V言论、社区热议、值得关注的长文 |
+| 💻 AI Coding | AI 编程工具动态、代码生成模型、Coding Agent |
+| 💡 发现机会 | 新应用场景、市场空白、创业方向 |
+
+## 数据源
+
+| 来源 | 类型 | 栏目覆盖 |
+|------|------|---------|
+| Hacker News | 社区讨论 | 全部 |
+| GitHub Trending | 开源项目 | 开源TOP、AI Coding |
+| Product Hunt | 产品发布 | 产品更新、发现机会 |
+| Reddit (r/LocalLLaMA, r/MachineLearning) | 社区讨论 | 前沿研究、社媒分享 |
+| Hugging Face | 模型/数据集 | 前沿研究、开源TOP |
+| V2EX | 中文社区 | 社媒分享、发现机会 |
+| Google Trends | 搜索趋势 | 行业展望、趋势判断 |
+| 机器之心 | 中文AI资讯 | 产品更新、前沿研究 |
+| 新智元 | 中文AI资讯 | 行业展望、社媒分享 |
+| GitHub Releases | 版本发布 | AI Coding、开源TOP |
+
+## 在线访问
+
+👉 **[ilovetochangetheworld.github.io/ai-daily-report](https://ilovetochangetheworld.github.io/ai-daily-report/)**
 
 ## 快速开始
 
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/yourusername/ai-daily-report.git
+git clone https://github.com/ilovetochangetheworld/ai-daily-report.git
 cd ai-daily-report
 ```
 
@@ -27,20 +52,16 @@ npm install
 
 ### 3. 配置环境变量
 
-复制 `.env.example` 到 `.env` 并填写：
-
 ```bash
 cp .env.example .env
 ```
 
-必需配置：
+必需：
 - `OPENAI_API_KEY`: OpenAI 兼容 API 密钥
-- `OPENAI_BASE_URL`: API 地址（可选，默认 OpenAI）
-- `OPENAI_MODEL`: 模型名称（可选，默认 gpt-4-turbo-preview）
 
-可选配置：
-- `PRODUCT_HUNT_TOKEN`: Product Hunt API Token（用于抓取 PH 数据）
-- `GITHUB_TOKEN`: GitHub Token（用于自动提交）
+可选：
+- `OPENAI_BASE_URL`: API 地址
+- `OPENAI_MODEL`: 模型名称
 
 ### 4. 本地运行
 
@@ -48,103 +69,17 @@ cp .env.example .env
 npm start
 ```
 
-生成的日报会保存到：
-- `zh/2026/2026-06-03.md` - 中文日报
-- `en/today.md` - 英文日报（今日）
-
 ## GitHub Actions 部署
 
-### 1. 推送代码到 GitHub
+1. 推送代码到 GitHub
+2. 在 Settings → Secrets → Actions 中添加 `OPENAI_API_KEY`
+3. 在 Settings → Pages 中选择 Source: Deploy from a branch → main / (root)
+4. 每天北京时间 8:00 自动运行，或手动触发
 
-```bash
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/yourusername/ai-daily-report.git
-git push -u origin main
-```
+## 参考项目
 
-### 2. 配置 Secrets
-
-在 GitHub 仓库设置 → Secrets and variables → Actions 中添加：
-
-- `OPENAI_API_KEY`: 你的 API 密钥
-- `PRODUCT_HUNT_TOKEN`: (可选) Product Hunt Token
-
-### 3. 启用 GitHub Pages
-
-1. 进入仓库 Settings → Pages
-2. Source 选择 "GitHub Actions"
-3. 保存
-
-### 4. 自动运行
-
-- 每天 8:00 UTC（北京时间 16:00）自动运行
-- 也可以手动触发：Actions → AI Daily Report → Run workflow
-
-## 项目结构
-
-```
-ai-daily-report/
-├── src/
-│   ├── index.js              # 主入口
-│   ├── fetchers/             # 数据源抓取器
-│   │   ├── base.js          # 基础抓取器类
-│   │   ├── hackernews.js    # HN 抓取器
-│   │   ├── github-trending.js
-│   │   ├── producthunt.js
-│   │   ├── reddit.js
-│   │   ├── huggingface.js
-│   │   ├── v2ex.js
-│   │   └── google-trends.js
-│   ├── aggregator.js         # 数据聚合去重
-│   ├── pipeline/            # 分析管道
-│   │   ├── orchestrator.js  # 主控制器
-│   │   └── llm.js          # LLM 调用封装
-│   └── renderer.js          # Markdown 生成器
-├── .github/
-│   └── workflows/
-│       └── daily-report.yml  # GitHub Actions 配置
-├── zh/                      # 中文日报输出
-│   └── 2026/
-├── en/                      # 英文日报输出
-│   └── today.md
-├── package.json
-└── README.md
-```
-
-## 自定义
-
-### 修改数据源
-
-编辑 `src/fetchers/index.js`，注释或添加数据源。
-
-### 修改分析维度
-
-编辑 `src/pipeline/orchestrator.js` 中的 `generateDimensions()` 函数。
-
-### 修改调度时间
-
-编辑 `.github/workflows/daily-report.yml` 中的 `cron` 表达式：
-
-```yaml
-schedule:
-  - cron: '0 8 * * *'  # 每天 8:00 UTC
-```
-
-## 小红书发布
-
-目前支持两种方式：
-
-1. **手动复制**：生成的 Markdown 可以手动复制到小红书编辑器
-2. **自动发布**（待实现）：需要小红书 Cookie 或 API
+- [CloudFlare-AI-Insight-Daily](https://github.com/justlovemaki/CloudFlare-AI-Insight-Daily) - AI 资讯日报的先驱项目
 
 ## 许可证
 
 MIT License
-
-## 致谢
-
-参考项目：
-- [DailyDawn](https://github.com/TangSY/dailydawn)
-- [CloudFlare-AI-Insight-Daily](https://github.com/justlovemaki/CloudFlare-AI-Insight-Daily)

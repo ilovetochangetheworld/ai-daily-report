@@ -8,40 +8,50 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.7; }
         .container { max-width: 860px; margin: 0 auto; padding: 40px 20px; }
-        .back { display: inline-block; margin-bottom: 24px; color: #f78166; text-decoration: none; }
+        .back { display: inline-block; margin-bottom: 24px; color: #f78166; text-decoration: none; font-size: 0.95em; }
         .back:hover { text-decoration: underline; }
         .markdown-body { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 32px; }
-        .markdown-body h1 { color: #e6edf3; font-size: 1.8em; margin-bottom: 16px; border-bottom: 1px solid #21262d; padding-bottom: 12px; }
-        .markdown-body h2 { color: #e6edf3; font-size: 1.35em; margin: 28px 0 12px; border-bottom: 1px solid #21262d; padding-bottom: 8px; }
+        .markdown-body h1 { color: #e6edf3; font-size: 1.8em; margin: 0 0 16px 0; border-bottom: 1px solid #21262d; padding-bottom: 12px; }
+        .markdown-body h2 { color: #e6edf3; font-size: 1.35em; margin: 28px 0 12px 0; border-bottom: 1px solid #21262d; padding-bottom: 8px; }
         .markdown-body p { margin: 10px 0; }
-        .markdown-body blockquote { border-left: 3px solid #f78166; padding: 8px 16px; margin: 16px 0; color: #8b949e; background: #0d1117; border-radius: 0 8px 8px 0; }
+        .markdown-body blockquote { border-left: 3px solid #f78166; padding: 10px 16px; margin: 16px 0; color: #8b949e; background: #0d1117; border-radius: 0 8px 8px 0; }
         .markdown-body strong { color: #e6edf3; }
         .markdown-body hr { border: none; border-top: 1px solid #21262d; margin: 24px 0; }
+        .markdown-body ul, .markdown-body ol { padding-left: 24px; margin: 10px 0; }
+        .markdown-body li { margin: 6px 0; }
+        .markdown-body a { color: #58a6ff; text-decoration: none; }
+        .markdown-body a:hover { text-decoration: underline; }
+        .markdown-body code { background: #1c2128; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: #f78166; }
         footer { text-align: center; margin-top: 40px; padding: 20px 0; border-top: 1px solid #21262d; color: #484f58; font-size: 0.85em; }
+        footer a { color: #f78166; text-decoration: none; }
     </style>
 </head>
 <body>
 <div class="container">
-    <a class="back" href="../../en/">← Back to English Daily</a>
+    <a class="back" href="../en/">← Back to English Daily</a>
     <div class="markdown-body">
         <h1>AI Daily Report 2026-06-03</h1>
-        <blockquote>
-        <p>📍 <strong>Today's Top 3 Signals</strong><br>
-        1. <strong>High Confidence</strong>: "Expanse (YC P26) – Unlock Wasted GPU Capacity" hits 347 points on HN<br>
-        2. <strong>External Discovery</strong>: "AI agent framework" Google Trends 7-day search +120%<br>
-        3. <strong>Double Validation</strong>: GitHub Trending and Reddit r/LocalLLaMA both discuss "llama.cpp new optimization"</p>
-        </blockquote>
-        <hr>
-        <h2>🗣 Tech Perspective</h2>
-        <p>Four days ago, a project named "Expanse" appeared on Hacker News, aiming to unlock wasted GPU capacity. Within days, it garnered over 300 points, sparking widespread discussion about GPU resource utilization. Meanwhile, Reddit's r/LocalLLaMA community is buzzing about the latest llama.cpp optimizations, which make running 70B parameter models on consumer hardware possible.</p>
-        <p><strong>Who pays for this?</strong> The pricing model of enterprise GPU cloud services is being challenged. The gap between traditional hourly billing and actual AI training needs is huge. Tools like Expanse aim to fill this gap—intelligent resource scheduling to boost GPU utilization from 30% to 80%+.</p>
-        <p>Over the past 7 days, searches for "AI agent" surged 120%. This isn't just a number—it reflects the developer community shifting from "how to call LLM APIs" to "how to build autonomous agent systems." On Product Hunt, daily active users of AI agent-related products tripled, with "agent memory management" and "multi-agent collaboration" being the two most discussed topics.</p>
-        <p>Why today? Because 7 new agent-related projects appeared on GitHub Trending, compared to only 2 yesterday. This concentrated burst isn't coincidence—it marks a new phase in AI development.</p>
-        <hr>
-        <p><em>Report generated: 2026-06-03T08:43:47.763Z</em><br>
-        <em>Data sources: Hacker News, GitHub Trending, Product Hunt, Reddit, Hugging Face, V2EX, Google Trends</em></p>
+<blockquote>
+<p>📍 <strong>Today&#39;s Top 3 Signals</strong></p>
+<ol>
+<li><strong>High Confidence</strong>: &quot;Expanse (YC P26) – Unlock Wasted GPU Capacity&quot; hits 347 points on HN</li>
+<li><strong>External Discovery</strong>: &quot;AI agent framework&quot; Google Trends 7-day search +120%</li>
+<li><strong>Double Validation</strong>: GitHub Trending and Reddit r/LocalLLaMA both discuss &quot;llama.cpp new optimization&quot;</li>
+</ol>
+</blockquote>
+<hr>
+<h2>🗣 Tech Perspective</h2>
+<p>Four days ago, a project named &quot;Expanse&quot; appeared on Hacker News, aiming to unlock wasted GPU capacity. Within days, it garnered over 300 points, sparking widespread discussion about GPU resource utilization. Meanwhile, Reddit&#39;s r/LocalLLaMA community is buzzing about the latest llama.cpp optimizations, which make running 70B parameter models on consumer hardware possible.</p>
+<p><strong>Who pays for this?</strong> The pricing model of enterprise GPU cloud services is being challenged. The gap between traditional hourly billing and actual AI training needs is huge. Tools like Expanse aim to fill this gap—intelligent resource scheduling to boost GPU utilization from 30% to 80%+.</p>
+<p>Over the past 7 days, searches for &quot;AI agent&quot; surged 120%. This isn&#39;t just a number—it reflects the developer community shifting from &quot;how to call LLM APIs&quot; to &quot;how to build autonomous agent systems.&quot; On Product Hunt, daily active users of AI agent-related products tripled, with &quot;agent memory management&quot; and &quot;multi-agent collaboration&quot; being the two most discussed topics.</p>
+<p>Why today? Because 7 new agent-related projects appeared on GitHub Trending, compared to only 2 yesterday. This concentrated burst isn&#39;t coincidence—it marks a new phase in AI development.</p>
+<hr>
+<p><em>Report generated: 2026-06-03T08:43:47.763Z</em><br><em>Data sources: Hacker News, GitHub Trending, Product Hunt, Reddit, Hugging Face, V2EX</em></p>
+
     </div>
-    <footer>Powered by <a href="https://github.com/ilovetochangetheworld/ai-daily-report" style="color:#f78166">AI Daily Report</a> · GitHub Actions</footer>
+    <footer>
+        Powered by <a href="https://github.com/ilovetochangetheworld/ai-daily-report">AI Daily Report</a> · GitHub Actions
+    </footer>
 </div>
 </body>
 </html>

@@ -9,6 +9,9 @@ const { RedditFetcher } = require('./reddit');
 const { HuggingFaceFetcher } = require('./huggingface');
 const { V2EXFetcher } = require('./v2ex');
 const { GoogleTrendsFetcher } = require('./google-trends');
+const { JiqizhixinFetcher } = require('./jiqizhixin');
+const { XinzhiyuanFetcher } = require('./xinzhiyuan');
+const { AICodingFetcher } = require('./ai-coding');
 
 const ALL_FETCHERS = [
     HackerNewsFetcher,
@@ -18,6 +21,9 @@ const ALL_FETCHERS = [
     HuggingFaceFetcher,
     V2EXFetcher,
     GoogleTrendsFetcher,
+    JiqizhixinFetcher,
+    XinzhiyuanFetcher,
+    AICodingFetcher,
 ];
 
 async function fetchAll() {
