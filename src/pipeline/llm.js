@@ -17,7 +17,7 @@ function createClient() {
 
 async function callLLM(systemPrompt, userPrompt, options = {}) {
     const {
-        model = process.env.OPENAI_MODEL || 'GLM-5.1',
+        model = process.env.OPENAI_MODEL || 'glm-4-flash',
         temperature = 0.7,
         maxTokens = 4000,
         retryCount = 3,
