@@ -1,11 +1,10 @@
 /**
  * LLM 调用封装 - 支持任何 OpenAI 兼容 API
- * 默认配置适配腾讯云混元 API
+ * 默认配置适配腾讯云 API
  */
 
 const OpenAI = require('openai');
 
-// 已知的错误模型名 → 自动修正映射
 const DEFAULT_BASE_URL = 'https://api.lkeap.cloud.tencent.com/plan/v3';
 const DEFAULT_MODEL = 'GLM-5.1';
 
@@ -34,7 +33,7 @@ async function callLLM(systemPrompt, userPrompt, options = {}) {
     } = options;
 
     const resolvedModel = resolveModel(model);
-    console.log(`  🤖 LLM 调用: model=${resolvedModel}, maxTokens=${maxTokens}`);
+    console.log(`  🤖 LLM 调用: model=${resolvedModel}, baseURL=${process.env.OPENAI_BASE_URL || DEFAULT_BASE_URL}, maxTokens=${maxTokens}`);
     
     const client = createClient();
     
@@ -53,10 +52,9 @@ async function callLLM(systemPrompt, userPrompt, options = {}) {
             return response.choices[0]?.message?.content || '';
         } catch (error) {
             console.error(`LLM 调用失败 (尝试 ${attempt}/${retryCount}):`, error.message);
-            // 打印完整错误信息以便排查
+            console.error(`  请求参数: model=${resolvedModel}, baseURL=${process.env.OPENAI_BASE_URL || DEFAULT_BASE_URL}`);
             if (error.status) console.error(`  HTTP Status: ${error.status}`);
             if (error.error) console.error(`  Error Body: ${JSON.stringify(error.error)}`);
-            if (error.headers) console.error(`  Headers: content-type=${error.headers['content-type']}`);
             if (attempt === retryCount) throw error;
             await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
         }
