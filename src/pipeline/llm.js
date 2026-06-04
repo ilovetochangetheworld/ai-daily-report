@@ -6,28 +6,11 @@
 const OpenAI = require('openai');
 
 // 已知的错误模型名 → 自动修正映射
-const MODEL_ALIASES = {
-    'GLM-5.1': 'glm-4-flash',
-    'GLM-4': 'glm-4-flash',
-    'glm-4': 'glm-4-flash',
-    'glm-5.1': 'glm-4-flash',
-    'GLM-5': 'glm-4-flash',
-    'hunyuan': 'hunyuan-lite',
-    'HUNYUAN': 'hunyuan-lite',
-};
-
 const DEFAULT_BASE_URL = 'https://api.lkeap.cloud.tencent.com/plan/v3';
-const DEFAULT_MODEL = 'glm-4-flash';
+const DEFAULT_MODEL = 'GLM-5.1';
 
 function resolveModel(model) {
     if (!model) return DEFAULT_MODEL;
-    // 精确匹配别名
-    if (MODEL_ALIASES[model]) return MODEL_ALIASES[model];
-    // 大小写不敏感匹配
-    const lower = model.toLowerCase();
-    for (const [alias, resolved] of Object.entries(MODEL_ALIASES)) {
-        if (alias.toLowerCase() === lower) return resolved;
-    }
     return model;
 }
 
@@ -70,6 +53,10 @@ async function callLLM(systemPrompt, userPrompt, options = {}) {
             return response.choices[0]?.message?.content || '';
         } catch (error) {
             console.error(`LLM 调用失败 (尝试 ${attempt}/${retryCount}):`, error.message);
+            // 打印完整错误信息以便排查
+            if (error.status) console.error(`  HTTP Status: ${error.status}`);
+            if (error.error) console.error(`  Error Body: ${JSON.stringify(error.error)}`);
+            if (error.headers) console.error(`  Headers: content-type=${error.headers['content-type']}`);
             if (attempt === retryCount) throw error;
             await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
         }
