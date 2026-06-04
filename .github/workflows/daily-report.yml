@@ -30,6 +30,9 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
+      - name: 🔍 List available models (debug)
+        run: node scripts/list-models.js
+
       - name: 🚀 Generate AI Daily Report
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
