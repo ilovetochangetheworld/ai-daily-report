@@ -52,7 +52,62 @@
     <a class="back" href="../en/">← Back to English Daily</a>
     <div class="markdown-body">
         <h1>AI Daily Report 2026-06-04</h1>
-<p>Generation failed：400 invalid model</p>
+<blockquote>
+<p>📰 From Frugal Agents to Enterprise SDKs: The AI Stack Matures Beyond Model Capabilities</p>
+</blockquote>
+<hr>
+<h2>🚀 Product &amp; Feature Updates</h2>
+<p>(New model releases, product iterations, API updates, pricing changes)</p>
+<ul>
+<li><strong>Claude Code v2.1.161/162:</strong> Anthropic updates Claude Code with enterprise-grade observability and permission management. The new versions introduce <code>OTEL_RESOURCE_ATTRIBUTES</code> for slicing metrics by custom dimensions (team/repo) and expose <code>waitingFor</code> states to identify permission blockages, signaling a shift toward enterprise governance.</li>
+<li><strong>OpenAI Codex CLI v0.137.0:</strong> Adds enterprise monthly credit limits and cloud托管 configurations, including support for EDU workspaces, addressing corporate cost control and compliance needs.</li>
+<li><strong>GitHub Copilot SDK:</strong> GitHub releases a multi-platform <code>copilot-sdk</code>, decoupling AI coding capabilities from the IDE and allowing Agent features to overflow into arbitrary applications and services.</li>
+<li><strong>Codex CLI Rust v0.138.0-alpha.1:</strong> OpenAI pushes a core performance refactoring of the Codex CLI, rewriting the底层 in Rust to accelerate Agent execution.</li>
+</ul>
+<h2>🔬 Frontier Research</h2>
+<p>(Latest papers, algorithm breakthroughs, training innovations)</p>
+<ul>
+<li><strong>NVIDIA Cosmos:</strong> NVIDIA open-sources <code>NVIDIA/cosmos</code>, a world model platform providing foundational infrastructure from datasets to toolchains. This targets the pain points of physical AI training for robotics and autonomous driving, pushing LLM embodiment toward &quot;physical world simulators.&quot;</li>
+</ul>
+<h2>🌍 Industry Outlook &amp; Social Impact</h2>
+<p>(Funding/M&amp;A, policy/regulation, ethics, employment impact)</p>
+<ul>
+<li><strong>The Illusion of Cheap Compute – API Proxies vs. Compliance:</strong> The proliferation of &quot;account pool&quot; and &quot;reverse-engineered&quot; cheap API relay stations reflects bottom-tier developers&#39; extreme thirst for affordable compute power. However, this is essentially gray arbitrage dancing on compliance red lines. The hidden costs—data privacy exfiltration and sudden service terminations—pose severe risks to production environments, raising questions about whether &quot;compute equity&quot; can be achieved through compliant means.</li>
+</ul>
+<h2>⭐ Open Source Top Projects</h2>
+<p>(Trending GitHub repos, major releases, community updates, with links)</p>
+<ul>
+<li><strong><a href="https://huggingface.co/datasets/fka/prompts.chat">fka/prompts.chat</a></strong> (Hugging Face, Score: 9729): A highly impactful prompt dataset gaining massive traction in the community.</li>
+<li><strong><a href="https://github.com/chopratejas/headroom">chopratejas/headroom</a></strong> (GitHub, Score: 3530): Delivers 60-95% Token compression rates, directly attacking the &quot;context overflow and cost assassin&quot; pain points in RAG and long-log scenarios, featuring MCP Server integration.</li>
+<li><strong><a href="https://github.com/affaan-m/ECC">affaan-m/ECC</a></strong> (GitHub, Score: 2141): An optimization harness for coding agents like Claude Code/Cursor, introducing Skills, Memory, and Security layers to solve performance degradation and security failures during multi-turn invocations.</li>
+<li><strong><a href="https://github.com/NousResearch/hermes-agent">NousResearch/hermes-agent</a></strong> (GitHub, Score: 1735): Focuses on Agent memory growth management and multi-source information aggregation slicing, essentially purifying the input端.</li>
+<li><strong><a href="https://github.com/Open-LLM-VTuber/Open-LLM-VTuber">Open-LLM-VTuber/open-LLM-VTuber</a></strong> (GitHub, Score: 693): An open-source project focusing on edge-side virtual digital human avatars, representing the virtual陪伴 pole of LLM embodiment.</li>
+</ul>
+<p><strong>Expert Take:</strong> Agent infrastructure is shifting from &quot;usable&quot; to &quot;frugal and hardcore.&quot; Context compression and Agent Harness optimization are becoming rigid demands as runtime costs and system performance损耗 emerge as the primary bottlenecks. However, pure middleware compression has a shallow moat and risks being subsumed by native long-context models as token prices drop.</p>
+<h2>💬 Social Media Highlights</h2>
+<p>(Key influencer opinions, community discussions, worth-reading long posts)</p>
+<ul>
+<li><strong>The Governance vs. DX Dilemma:</strong> Community debates are heating up over the enterprise governance of AI Agents. While observability and cost controls are necessary, over-governance threatens Developer Experience (DX). Cumbersome permission pop-ups and quota limits risk turning fluid Agents into &quot;puppets hitting walls,&quot; potentially driving developers to bypass corporate approvals using unauthorized shadow tools.</li>
+<li><strong>Multi-Agent Debugging Nightmares:</strong> As multi-agent concurrent orchestration via CLI becomes standard for large codebases, developers are sounding the alarm on debugging complexity. Current TUI visualizations remain rudimentary; when a sub-agent hallucinates or enters an infinite loop, the debugging cost explodes, often leaving developers with no choice but to &quot;kill and restart.&quot;</li>
+</ul>
+<h2>💻 AI Coding</h2>
+<p>(AI coding tool updates, code generation models, Coding Agent dynamics, developer workflow changes)</p>
+<ul>
+<li><strong>From Geek Toy to Enterprise Infrastructure:</strong> The competitive focus of AI Coding tools has shifted from single-point code generation to enterprise-level observability, permission control, and cost governance—the prerequisite for scaled Agent deployment.</li>
+<li><strong>CLI as the Nerve Center for Multi-Agent Orchestration:</strong> Single-threaded conversational coding has hit a ceiling. CLI-based multi-agent fan-out/aggregation architectures are becoming the standard for大型 codebases. Claude Code&#39;s continuous enhancement of the <code>agents</code> command (tracking <code>done/total</code> progress, longest-running tasks) and Codex CLI&#39;s TUI updates prove the terminal is reclaiming its status as the primary interaction interface.</li>
+<li><strong>Decoupling from the IDE:</strong> AI Coding is shedding its identity as an IDE附属, evolving into底层 infrastructure that can be embedded anywhere via SDKs. Rust is becoming the standard for high-performance Agents, while native system tool bindings (like Grep/Glob in Claude Code) are deepening. However, SDK-homogenization risks stalling innovation at the API-wrapper level.</li>
+</ul>
+<h2>💡 Opportunity Discovery</h2>
+<p>(New application scenarios, market gaps, startup directions)</p>
+<ul>
+<li><strong>RAG &amp; Log Cost Optimization:</strong> Immediate ROI exists in integrating context compression tools (like <code>headroom</code>) into RAG pipelines and log analysis. Startups should focus on building vertical compression solutions, but must remain agile against foundational model absorption.</li>
+<li><strong>Enterprise AI Guardrails:</strong> Building internal OTEL-based monitoring dashboards that link Token consumption, Agent blockages, and R&amp;D efficiency metrics. Finding the &quot;least privilege&quot; balance to keep Agents both secure and fluid is a massive B2B opportunity.</li>
+<li><strong>SDK-First AI Integration:</strong> Stop building &quot;IDE plugins.&quot; Embed AI coding capabilities directly into CI/CD pipelines, PR review bots, and internal ticketing systems. The opportunity lies in workflow integration, not just code generation.</li>
+<li><strong>Embodiment Polarization:</strong> The capital imagination for middle-ground API Agents is fading. Opportunities lie at the extremes: deep physical world simulation (robotics/AV training via platforms like Cosmos) or highly personalized, low-latency edge-side virtual companions (VTubers).</li>
+</ul>
+<hr>
+<p><em>Report generated: 2026-06-04</em>
+<em>Data sources: Hugging Face, GitHub, V2EX, Expert Analyses</em></p>
 
     </div>
     <footer>
