@@ -6,11 +6,12 @@
 const OpenAI = require('openai');
 
 const DEFAULT_BASE_URL = 'https://api.lkeap.cloud.tencent.com/plan/v3';
-const DEFAULT_MODEL = 'GLM-5.1';
+const DEFAULT_MODEL = 'glm-5.1';
 
 function resolveModel(model) {
     if (!model) return DEFAULT_MODEL;
-    return model;
+    // 腾讯云 API 模型名区分大小写，强制小写
+    return model.toLowerCase();
 }
 
 function createClient() {
