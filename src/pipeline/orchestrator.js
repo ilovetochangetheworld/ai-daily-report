@@ -129,11 +129,12 @@ ${dimension.systemHint}
 - 使用 Markdown 格式
 - 每个分析点以 ### 开头，包含标题
 - 每个分析点包含：核心判断（加粗）、关键证据、反向视角、实战建议
+- **引用信号时必须保留原始来源链接**，格式为 [来源名](URL)
 - 语言专业犀利，避免空话套话
 - 中文输出`;
 
     const signalsText = dimension.signals.map(s =>
-        `- **${s.title}** (${s.source})\n  ${s.summary || '无摘要'}\n  链接: ${s.url}`
+        `- **${s.title}** (${s.source}) [来源](${s.url})\n  ${s.summary || '无摘要'}`
     ).join('\n\n');
 
     try {
@@ -222,6 +223,7 @@ async function generateReport(lang, date, classified, expertAnalyses, headline) 
 
 注意事项：
 - 每个板块至少2-3条内容
+- **每条资讯必须附带原始来源链接**，格式为在条目标题或来源名后加 [来源](URL)，优先使用下方提供的信号链接
 - 开源项目必须附 GitHub 链接
 - 语言专业犀利，重要关键词加粗
 - 不重复已有专家分析的原文，但要整合其洞察`
@@ -266,11 +268,11 @@ Output structure (Markdown):
     ).join('\n\n---\n\n');
 
     const topSignalsText = topSignals.map((s, i) =>
-        `${i + 1}. **${s.title}** (${s.source}, score:${s.score})\n   ${s.url}`
+        `${i + 1}. **${s.title}** [${s.source}](${s.url}) (score:${s.score})`
     ).join('\n');
 
     const userPrompt = isZh
-        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」`
+        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 重要：每条资讯条目都必须附带可点击的来源链接！`
         : `Please generate the AI Daily Report for ${date} (English version).\n\n**Top 5 Signals:**\n${topSignalsText}\n\n**Expert Analyses:**\n${expertText}\n\nPlease generate the complete report in Markdown. Headline: "${headline}"`;
 
     try {

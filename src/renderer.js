@@ -8,6 +8,15 @@ const { marked } = require('marked');
 
 const OUTPUT_BASE = path.join(__dirname, '..');
 
+// 配置 marked：外部链接新窗口打开
+const renderer = new marked.Renderer();
+const origLink = renderer.link.bind(renderer);
+renderer.link = function(href, title, text) {
+    const html = origLink(href, title, text);
+    return html.replace('<a ', '<a target="_blank" rel="noopener" ');
+};
+marked.setOptions({ renderer });
+
 function saveReport(markdown, lang, date) {
     const dir = path.join(OUTPUT_BASE, lang, date.substring(0, 4));
     fs.mkdirSync(dir, { recursive: true });
@@ -173,6 +182,7 @@ function generateIndex() {
                         const isActive = item.date === latestDate;
                         return `<a class="timeline-item${isActive ? ' active' : ''}" 
                                    href="./zh/${item.year}/${item.file}" 
+                                   target="_blank" rel="noopener"
                                    data-date="${item.date}"
                                    title="AI 日报 ${item.date}">
                             <span class="day-num">${day}日</span>
