@@ -174,7 +174,6 @@ async function generateHeadline(classified, date) {
 async function generateReports(date, classified, dimensions, expertAnalyses, headline) {
     const reports = {};
     reports.zh = await generateReport('zh', date, classified, expertAnalyses, headline);
-    reports.en = await generateReport('en', date, classified, expertAnalyses, headline);
     return reports;
 }
 

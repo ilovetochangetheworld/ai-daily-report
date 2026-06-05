@@ -24,24 +24,21 @@ async function main() {
     console.log(`\n🤖 AI 日报生成器 - ${date}\n`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    console.log('\n📡 步骤 1/4: 抓取数据源...');
+    console.log('\n📡 步骤 1/3: 抓取数据源...');
     const rawData = await fetchAll();
     const totalItems = rawData.length;
     console.log(`  ✓ 共抓取 ${totalItems} 条数据`);
 
-    console.log('\n🔄 步骤 2/4: 聚合 & 去重 & 打分...');
+    console.log('\n🔄 步骤 2/3: 聚合 & 去重 & 打分...');
     const signals = aggregate(rawData);
     console.log(`  ✓ 聚合后 ${signals.length} 条信号`);
 
-    console.log('\n🧠 步骤 3/4: 多 Agent 分析管道...');
+    console.log('\n🧠 步骤 3/3: 多 Agent 分析管道...');
     const reports = await runPipeline({ date, signals });
 
-    console.log('\n📄 步骤 4/4: 渲染 & 保存...');
+    console.log('\n📄 渲染 & 保存...');
     const zhPath = saveReport(reports.zh.markdown, 'zh', date);
     console.log(`  ✓ 中文日报: ${zhPath}`);
-
-    const enPath = saveReport(reports.en.markdown, 'en', date);
-    console.log(`  ✓ English Daily: ${enPath}`);
 
     try {
         generateIndex();

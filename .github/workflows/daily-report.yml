@@ -50,7 +50,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add zh/ en/ index.html zh/index.html en/index.html 2>/dev/null || true
+          git add zh/ index.html zh/index.html 2>/dev/null || true
           git diff --staged --quiet || (git commit -m "🤖 AI 日报 - $(date +%Y-%m-%d)" && git push)
 
       - name: 📦 Upload artifacts
@@ -60,5 +60,4 @@ jobs:
           name: daily-report-${{ github.run_number }}
           path: |
             zh/
-            en/
           retention-days: 30
