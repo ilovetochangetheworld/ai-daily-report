@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Daily Report 2026-06-04</title>
+    <title>AI Daily Report 2026-06-05</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -51,63 +51,58 @@
 <div class="container">
     <a class="back" href="../en/">← Back to English Daily</a>
     <div class="markdown-body">
-        <h1>AI Daily Report 2026-06-04</h1>
+        <h1>AI Daily Report 2026-06-05</h1>
 <blockquote>
-<p>📰 From Prompt Engineering to Agent Orchestration: The AI ecosystem shifts from single-model capabilities to skill-driven architectures, enterprise governance, and privacy-first infrastructure.</p>
+<p>📰 The End of Junior Coders, API Relay Wars, and the Shift to Context Engineering</p>
 </blockquote>
 <hr>
 <h2>🚀 Product &amp; Feature Updates</h2>
-<p>(New model releases, product iterations, API updates, pricing changes)</p>
 <ul>
-<li><strong>GitHub Copilot Agent SDK Released:</strong> GitHub officially launched the <code>copilot-sdk</code>, enabling developers to integrate Copilot Agents into any application or service. This marks Copilot&#39;s transition from an IDE plugin to a foundational Agent infrastructure, aiming to become the workflow entry point for third-party ecosystems.</li>
-<li><strong>Claude Code v2.1.161 &amp; v2.1.162 Updates:</strong> Anthropic continues to iterate on enterprise governance and multi-agent observability. The latest versions introduce <code>OTEL_RESOURCE_ATTRIBUTES</code> for custom FinOps metric slicing (by team/repo) and expose <code>waitingFor</code> states and <code>done/total</code> progress during multi-agent fan-out, allowing developers to pinpoint exact bottlenecks (e.g., permission prompts).</li>
-<li><strong>Codex CLI v0.137.0 Update:</strong> OpenAI adds enterprise monthly quota limits and cloud-hosted configuration packages (including EDU workspaces), signaling a push for centralized IT management in AI coding tools.</li>
+<li><strong>GitHub Releases Copilot SDK:</strong> GitHub open-sourced the <code>copilot-sdk</code>, decoupling the Copilot Agent from the editor and positioning it as a cross-platform development infrastructure. It aims to establish the standard interaction protocol for AI Agents, allowing third-party IDEs and CI/CD tools to natively integrate Copilot capabilities.</li>
+<li><strong>Claude Code Shifts to Enterprise Governance:</strong> Anthropic&#39;s CLI agent, Claude Code, rolled out v2.1.162 &amp; v2.1.163, introducing <code>requiredMinimumVersion</code> and <code>requiredMaximumVersion</code> managed settings (blocking non-compliant launches) and a new <code>/plugin</code> system, signaling its transition from a geek toy to enterprise-grade infrastructure.</li>
+<li><strong>OpenAI Codex CLI Goes Rust:</strong> OpenAI rapidly iterated on <code>Codex CLI</code>, releasing <code>rust-v0.138.0-alpha.3</code> and <code>alpha.4</code>, explicitly rewriting the local CLI in Rust to bypass Node.js/Python memory and startup overhead, entering the performance deep-water zone.</li>
+<li><strong>Claude Agent Upgrades Telemetry:</strong> Claude Code added a <code>waitingFor</code> field via <code>claude agents --json</code> to expose agent blocking states, solving the &quot;silent freeze&quot; pain point in multi-agent collaboration.</li>
 </ul>
 <h2>🔬 Frontier Research</h2>
-<p>(Latest papers, algorithm breakthroughs, training innovations)</p>
 <ul>
-<li><strong>The Architecture of Agent Memory &amp; Instincts:</strong> The open-source community is actively exploring the &quot;Operating System&quot; layer for AI Agents. Research and frameworks are shifting away from stateless, single-prompt interactions toward persistent state memory, instinctual safety mechanisms, and composable skills—key requirements for transitioning agents from toys to production-grade workers.</li>
-<li><strong>Prompt Engineering as a Dataset:</strong> The massive traction of the <code>fka/prompts.chat</code> dataset (Score: 9729) indicates a strong community focus on structuring and sharing high-quality prompt architectures, serving as the foundational training data for complex agent behaviors.</li>
+<li><strong>From Brute-Force Context to Precision Compression:</strong> LLM application research is pivoting from &quot;expanding context windows&quot; to &quot;Context Engineering.&quot; Data distillation and Token compression are now critical. Projects like <code>headroom</code> demonstrate that 60-95% Token compression is achievable without degrading answer quality, fundamentally changing RAG and Agent log processing.</li>
+<li><strong>OCR as an LLM Structural Bridge:</strong> Traditional OCR tools (like <code>PaddleOCR</code>) are undergoing a strategic research shift—from mere text extraction to acting as structured data bridges connecting visual/PDF inputs directly to LLMs, eliminating the inefficiencies of brute-force long-text ingestion.</li>
 </ul>
 <h2>🌍 Industry Outlook &amp; Social Impact</h2>
-<p>(Funding/M&amp;A, policy/regulation, ethics, employment impact)</p>
 <ul>
-<li><strong>The Gray Market of API Relay Stations:</strong> A fierce price war has erupted among LLM API relay/proxy services advertising &quot;GPT Pro Account Pools&quot; and &quot;Reverse-engineered Claude Bedrock&quot; access at rock-bottom prices. While this meets the genuine market demand from budget-constrained indie developers priced out of official APIs, it operates in a legal gray area. These services face imminent compliance crackdowns and sudden service blackouts, posing a massive supply-chain risk for any production environment relying on them.</li>
-<li><strong>Privacy Backlash Against SaaS Telemetry:</strong> A growing &quot;stress-response&quot; among developers against pervasive SaaS data collection is fueling the rise of &quot;zero-install, pure client&quot; tools. Developers are increasingly prioritizing local-first credential storage and standard SSH protocols over convenience, rejecting the telemetry norms of modern SaaS.</li>
+<li><strong>Employment Restructuring: The Death of Junior Coders &amp; Rise of &quot;AI Dispatch Architects&quot;:</strong> Traditional &quot;code搬运工&quot; (code porters) face total clearance within 5 years. Programming shifts from &quot;production&quot; to &quot;review and system dispatch.&quot; While junior corporate roles vanish, this democratization may spawn millions of &quot;micro-indie developers&quot; operating as super-individuals rather than corporate employees.</li>
+<li><strong>Capital Harvest: Oligopoly in AI DevTools &amp; The Death of Thin Wrappers:</strong> The AI dev toolchain faces brutal M&amp;A consolidation. With Cursor/Copilot owning the IDE entry point and Codex/Claude controlling base generation, independent Agents lacking proprietary data moats will be wiped out by giant feature溢出 (feature overflow). Startups must pivot to hyper-vertical domains (e.g., medical/compliance code) to build M&amp;A leverage.</li>
+<li><strong>Ethics Black Hole: Code Liability &amp; The Rise of &quot;Software Engineering Guarantors&quot;:</strong> As AI generates 90% of code, liability chains for open-source pollution or hallucination-induced security flaws are broken. This will force regulators to create &quot;Algorithm Liability Acts,&quot; birthing a mandatory &quot;Code Auditor&quot; profession akin to financial auditors, though actual legislation may lag technology by a decade.</li>
 </ul>
 <h2>⭐ Open Source Top Projects</h2>
-<p>(Trending GitHub repos, major releases, community updates, with links)</p>
 <ol>
-<li><strong><a href="https://huggingface.co/datasets/fka/prompts.chat">fka/prompts.chat</a></strong> (HuggingFace, Score: 9729) - A highly trending dataset for structured prompt engineering, reflecting the community&#39;s hunger for high-quality agent instruction designs.</li>
-<li><strong><a href="https://github.com/chopratejas/headroom">chopratejas/headroom</a></strong> (GitHub, Score: 3530) - A trending repository capturing significant developer interest (specific focus expanding on DevX/infrastructure tooling).</li>
-<li><strong><a href="https://github.com/affaan-m/ECC">affaan-m/ECC</a></strong> (GitHub, Score: 2141) - An orchestration layer injecting security, memory, and instincts into coding agents like Claude Code and Cursor, acting as an &quot;OS&quot; for Agents.</li>
-<li><strong><a href="https://github.com/NousResearch/hermes-agent">NousResearch/hermes-agent</a></strong> (GitHub, Score: 1735) - An agent framework emphasizing &quot;growing with you,&quot; focusing on state persistence and personalized memory.</li>
-<li><strong><a href="https://github.com/Open-LLM-VTuber/Open-LLM-VTuber">Open-LLM-VTuber/open-LLM-VTuber</a></strong> (GitHub, Score: 693) - An open-source project combining LLMs with VTuber avatars, pushing the boundaries of interactive AI personas.</li>
+<li><strong><a href="https://huggingface.co/datasets/fka/prompts.chat">fka/prompts.chat</a></strong> (HuggingFace, Score: 9730)<br><em>Signal:</em> The mirroring of prompt datasets to HuggingFace signifies that pure &quot;prompt lists&quot; are fully commoditized. Value is shifting from static prompts to dynamic skill ecosystems and social platforms.</li>
+<li><strong><a href="https://github.com/chopratejas/headroom">chopratejas/headroom</a></strong> (GitHub, Score: 3142)<br><em>Signal:</em> Context engineering breakthrough. A token compression tool for RAG and Agent logs, achieving 60-95% compression without quality loss, available as a library, proxy, and MCP service.</li>
+<li><strong><a href="https://github.com/NousResearch/hermes-agent">NousResearch/hermes-agent</a></strong> (GitHub, Score: 1913)<br><em>Signal:</em> General agent frameworks wane; dynamic skill acquisition rises. Emphasizes &quot;growing with you,&quot; shifting from static prompts to evolving agent capabilities.</li>
+<li><strong><a href="https://github.com/affaan-m/ECC">affaan-m/ECC</a></strong> (GitHub, Score: 1750)<br><em>Signal:</em> Coding Agent meta-tool. Focuses on underlying performance optimization, providing skill, memory, and security harnesses specifically for mature coding tools like Claude Code/Cursor.</li>
+<li><strong><a href="https://github.com/Open-LLM-VTuber/Open-LLM-VTuber">Open-LLM-VTuber/Open-LLM-VTuber</a></strong> (GitHub, Score: 581)<br><em>Signal:</em> Open-source virtual AI companions continue steady iteration, bridging LLMs with expressive avatars.</li>
 </ol>
-<p><strong>Trend Insight:</strong> Agent orchestration is exploding. The competitive focus has shifted from raw model capabilities to peripheral empowerment systems. Frameworks lacking memory and skill plugins will rapidly become obsolete.</p>
 <h2>💬 Social Media Highlights</h2>
-<p>(Key influencer opinions, community discussions, worth-reading long posts)</p>
 <ul>
-<li><strong>&quot;Panel Anxiety&quot; Among AI-Assisted Devs:</strong> A severe cognitive divide has emerged among new developers. AI assistants frequently recommend GUI server panels (like 1Panel or BT) to solve Nginx/DB management pain points, but legacy community warnings about panel backdoors and telemetry terrify newbies. <strong>Consensus:</strong> Abandon dogmatic anti-panel purism. Choose modern, open-source, actively audited panels, but strictly restrict their port exposure (VPN/localhost only). Alternatively, use AI to generate Docker Compose/GitOps configs instead of manual command-line hacking, which is often less secure than a modern panel.</li>
-<li><strong>The Fallback Mechanism Mandate:</strong> Amidst the API proxy gray market discussions, the community strongly agrees: <strong>Never connect reverse-engineered proxy APIs to systems containing user privacy or core business logic.</strong> Use them strictly for local efficiency tools or PoCs. Production code must implement multi-provider fallback mechanisms to survive the inevitable proxy bans.</li>
+<li><strong>The &quot;Pinduoduo-fication&quot; of API Relays:</strong> API relay stations have entered a predatory subsidy phase. V2EX and similar forums are flooded with &quot;register for free $15 credit&quot; posts offering GPT-5.5/Claude Bedrock reverse proxies at absurdly low prices (e.g., $0.01/1K tokens). <em>Consensus:</em> Great for vibe-coding and non-core testing, but an absolute minefield for production environments—expect sudden bans and exit scams.</li>
+<li><strong>Vibe-Coding&#39;s Dimensional Strike on Tech Stacks:</strong> Traditional debates (e.g., PHP vs. Node.js) are dead. The real divide is between &quot;AI-native development&quot; and &quot;traditional hand-coding.&quot; While AI lowers the barrier to writing code, it doesn&#39;t replace the architectural vision needed to manage it. Developers must pivot from &quot;language artisans&quot; to &quot;AI code reviewers.&quot;</li>
+<li><strong>Community Content Alienation:</strong> Developer forums are degrading into low-quality traffic pools for API relay marketing. While this proves the high LTV of developer traffic, the &quot;leave ID for credit&quot; spam is exhausting geek communities. Users must build strict info filters to separate &quot;wool-gathering&quot; from deep tech discussions.</li>
 </ul>
 <h2>💻 AI Coding</h2>
-<p>(AI coding tool updates, code generation models, Coding Agent dynamics, developer workflow changes)</p>
 <ul>
-<li><strong>From &quot;Solo Toy&quot; to &quot;Enterprise Infra&quot;:</strong> AI coding tools are forcing an evolution into enterprise-grade infrastructure. Cost governance and permission auditing are replacing raw code generation as the core selling points. However, overly strict quotas may drive developers back to &quot;Shadow IT&quot; (using personal API keys), costing enterprises codebase visibility. <strong>Action:</strong> Integrate AI Coding into FinOps (e.g., using Claude Code&#39;s OTEL slicing for token dashboards) and balance circuit breakers with whitelist mechanisms.</li>
-<li><strong>Mastering Multi-Agent Fan-Out:</strong> Multi-agent parallel processing is now standard for complex tasks, but the bottleneck has moved from &quot;how to parallelize&quot; to &quot;how to debug blockages.&quot; Developers must adapt their workflows: hook into <code>--json</code> streams during CI/CD to build automated timeout alerts, and explicitly declare toolsets (like forcing Grep/Glob) in prompts to prevent silent degradation and &quot;hallucinated searches.&quot;</li>
-<li><strong>The Ecosystem Platform War:</strong> With the release of the Copilot Agent SDK, the AI coding war has escalated from fighting for developer desktops to capturing third-party application workflow entry points. The risk is that weak third-party integrations might expose Copilot&#39;s context-handling weaknesses once outside its native GitHub/VS Code environment.</li>
+<li><strong>CLI Agents Enter Enterprise Governance:</strong> Claude Code&#39;s version control and plugin system mark the formal transition of CLI agents into managed enterprise tools. However, CLI plugins without strict sandboxing pose severe supply chain attack risks (malicious plugins stealing repo context). Security teams must evaluate Managed Settings immediately.</li>
+<li><strong>The Protocol War:</strong> GitHub&#39;s <code>copilot-sdk</code> is a strategic move to monopolize the AI Agent interaction protocol. While it abstracts away model limitations, it introduces vendor lock-in. Internal Developer Platform (IDP) teams should integrate it as base infrastructure but maintain fallback interfaces to OpenAI/Anthropic native APIs.</li>
+<li><strong>Performance &amp; Observability Deep Dive:</strong> The Rust rewrite of Codex CLI and Claude Code&#39;s <code>waitingFor</code> telemetry highlight the new competitive frontiers: runtime performance and multi-agent observability. Heavy developers now demand minimal local overhead and transparent debugging states over just &quot;code generation capability.&quot;</li>
 </ul>
 <h2>💡 Opportunity Discovery</h2>
-<p>(New application scenarios, market gaps, startup directions)</p>
 <ul>
-<li><strong>Agent OS &amp; Skill Marketplaces:</strong> As agents transition to &quot;skill and memory-driven&quot; architectures, there is a massive gap for composable, plug-and-play agent skills (similar to <code>mvanhorn/last30days-skill</code>) and robust memory/state management layers.</li>
-<li><strong>Enterprise FinOps for AI Agents:</strong> As coding agents proliferate, companies desperately need dashboards that track token consumption, ROI, and permission states across multiple agents (Claude, Codex, Copilot) to prevent budget overruns and security leaks.</li>
-<li><strong>Privacy-First Dev Tooling:</strong> The strong backlash against SaaS telemetry presents a clear market opportunity for &quot;Zero-Install, Pure SSH&quot; developer tools that guarantee local-first credential storage and zero data reporting, catering to privacy-conscious and enterprise security teams.</li>
+<li><strong>Vertical &quot;Rapid Image Gen&quot; Workflow SaaS:</strong> General AI image tools have too high a prompt barrier for non-tech staff. SaaS that locks into specific roles (e.g., e-commerce operations, social media planners) with &quot;fill-in-the-blank&quot; UIs—hiding complex prompts in the backend—is a current cash cow. <em>Niche:</em> Don&#39;t build general tools; build standard SOPs for specific outputs (e.g., Xiaohongshu covers).</li>
+<li><strong>Multi-Model API Routing &amp; Cost Gateway:</strong> SMEs are torn between cheap models (DeepSeek V4) and high-quality models (GPT). A smart routing gateway that dynamically assigns tasks (e.g., cheap model for drafts, expensive model for final polish) and charges per satisfied result fills a major B2B gap.</li>
+<li><strong>&quot;Job-Saving&quot; Bulk Generation Wrappers:</strong> The real driver for workplace AI tools is often &quot;appeasing the boss,&quot; not creativity. Tools that generate 20 varied layouts in one click to simulate massive effort cater to upward management needs. Low-cost subscriptions targeting workplace anxiety hold massive short-term monetization potential.</li>
+<li><strong>Prompt Engineering as &quot;Capsules&quot; for Non-Techies:</strong> Prompting is shifting from a skill to a parameter. Packaging complex image-gen prompts into industry-specific &quot;recipe capsules&quot; (where users only input business terms) is a low-barrier, high-margin micro-entrepreneurship direction before native multimodal conversational UIs mature.</li>
 </ul>
 <hr>
-<p><em>Report generated: 2026-06-04</em>
-<em>Data sources: HuggingFace Trending, GitHub Trending, V2EX, Hacker News, Expert Community Analyses</em></p>
+<p><em>Report generated: 2026-06-05</em><br><em>Data sources: HuggingFace Trending, GitHub Trending, V2EX, Expert Algorithm Analyses</em></p>
 
     </div>
     <footer>
