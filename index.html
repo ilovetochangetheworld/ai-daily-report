@@ -159,77 +159,78 @@
         <div class="markdown-body">
             <h1>AI 资讯日报 2026-06-08</h1>
 <blockquote>
-<p>📰 Agent 竞争走向垂直技能生态，Coding Agent 底层重构 Rust 化，AI 套利催生反垃圾与合规新蓝海</p>
+<p>📰 </p>
 </blockquote>
 <hr>
 <h2>🚀 产品与功能更新</h2>
 <ul>
-<li><p><strong>Claude Code 连续静默更新，Coding Agent 竞争跨入“稳定性生死线”</strong>：Anthropic 连续推送 <a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-code/releases/tag/v2.1.167">Claude Code v2.1.167</a> 与 <a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-code/releases/tag/v2.1.168">v2.1.168</a>，更新日志均仅为“Bug fixes and reliability improvements”。这种高频无新功能的静默迭代，暴露出 AI 编程工具在真实复杂本地环境中正遭遇大量边缘场景崩溃，<strong>工程鲁棒性</strong>已取代代码生成惊艳度，成为 Agent 可用性的决定性因素。 <a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-code/releases/tag/v2.1.168">来源</a></p>
+<li><p><strong>Claude Code 连续推送无日志补丁，Agent 稳定性成生产级应用决胜点</strong>：Anthropic 在极短时间内连续发布 Claude Code v2.1.167 和 v2.1.168 两个版本，更新说明均仅为“Bug fixes and reliability improvements”。这标志着 Coding Agent 的竞争焦点已从“跑通炫酷 Demo”全面转向<strong>生产级稳定性</strong>，连续修 Bug 也暴露出当前 Agent 在大型 Monorepo 解析或长上下文处理等复杂工程中仍显脆弱。<a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-code/releases/tag/v2.1.168">来源</a></p>
 </li>
-<li><p><strong>OpenAI Codex CLI 底层“换血”，Rust + V8 重构执行层</strong>：<a target="_blank" rel="noopener" href="https://github.com/openai/codex/releases/tag/rust-v0.138.0-alpha.6">Codex CLI rust-v0.138.0-alpha.6</a> 与 <a target="_blank" rel="noopener" href="https://github.com/openai/codex/releases/tag/rusty-v8-v149.2.0">rusty-v8-v149.2.0</a> 双线推进。纯 Rust 重写旨在追求跨平台与极致启动性能，引入 rusty-v8 则是在 Rust 高安全沙箱中嵌入 V8 引擎，兼顾<strong>动态代码执行的安全隔离</strong>与 JS/TS 生态兼容，标志着 Agent 执行层正从解释型脚本向系统级语言降维打击。 <a target="_blank" rel="noopener" href="https://github.com/openai/codex/releases/tag/rust-v0.138.0-alpha.6">来源</a></p>
+<li><p><strong>OpenAI 重构 Codex CLI 底层，Rust+V8 双引擎构筑安全沙盒</strong>：Codex CLI 同时推进 <code>rust-v0.138.0-alpha.6</code> 和 <code>rusty-v8-v149.2.0</code> 两条更新线。Rust 负责系统级的高性能与内存安全，V8 提供隔离的 JavaScript 沙盒环境用于执行 AI 生成的代码。AI 编程工具正从“文本生成器”向<strong>具备安全沙盒的自主执行体</strong>硬核演进，防注入与防误操作进入深水区。<a target="_blank" rel="noopener" href="https://github.com/openai/codex/releases/tag/rust-v0.138.0-alpha.6">来源</a></p>
 </li>
-<li><p><strong>AI 额度遭遇“刺客”时刻，跨区订阅触发隐性降权</strong>：用户通过土耳其区 App Store 订阅 ChatGPT Plus 后，使用 Codex 半小时即触发额度上限，产生强烈受骗感。这揭示了两个盲区：Agent 工具是<strong>算力吞噬兽</strong>，与日常对话消耗不在同一量级；非官方渠道存在极高的风控降权与隐性限额风险。 <a target="_blank" rel="noopener" href="https://www.v2ex.com/t/1218604">来源</a></p>
-</li>
-</ul>
-<h2>🔬 前沿研究</h2>
-<ul>
-<li><p><strong>Rust/C++ 重塑 RAG 底座，突破 Python 生态性能天花板</strong>：大模型应用的降本增效已触及 Python 瓶颈。<a target="_blank" rel="noopener" href="https://github.com/RyanCodrai/turbovec">RyanCodrai/turbovec</a> 基于 TurboQuant 用 Rust 重写向量索引并提供 Python 绑定，主打极致吞吐与低延迟；结合常青树项目 ggml-org/llama.cpp 的 C/C++ 底层优化，<strong>高性能推理与检索的底层军备竞赛</strong>已全面倒向系统级语言。 <a target="_blank" rel="noopener" href="https://github.com/RyanCodrai/turbovec">来源</a></p>
-</li>
-<li><p><strong>高质量提示词数据集演进，驱动模型对齐新范式</strong>：在 Hugging Face 上热度爆表的 <a target="_blank" rel="noopener" href="https://huggingface.co/datasets/fka/prompts.chat">fka/prompts.chat</a>（得分高达 9733）标志着提示词工程正从个人经验沉淀为结构化、高质量的开源数据集。这将为下一阶段模型微调（SFT）与对齐提供更纯净的语料，直击模型指令遵循能力的痛点。 <a target="_blank" rel="noopener" href="https://huggingface.co/datasets/fka/prompts.chat">来源</a></p>
-</li>
-</ul>
-<h2>🌍 行业展望与社会影响</h2>
-<ul>
-<li><p><strong>AI 劳动力套利见顶，中间商模式加速瓦解</strong>：<a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">yikart/AiToEarn</a> 的火爆标志着“用 AI 赚钱”已成大众刚需。然而，代写、翻译等零工市场的个体套利空间正被极速拉平，供给膨胀将导致平台对 AI 生成内容降权。单纯的“AI 代工”沦为红海，<strong>AI 劳动力调度与合规基础设施</strong>才是真正的护城河。 <a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">来源</a></p>
-</li>
-<li><p><strong>苹果品控信任裂缝，用户被迫退化成“极客排雷员”</strong>：iPhone 17 频发待机发热与电量尿崩，常规排障甚至 DFU 恢复均告失效，问题直指 iOS 系统级调度死锁或硬件隐性缺陷。相关讨论在 <a target="_blank" rel="noopener" href="https://www.v2ex.com/t/1218521">V2EX</a> 引发大量共鸣，苹果生态的“省心”神话正在被底层异常击穿，长尾发热帖的聚合效应将直接动摇高端基本盘。 <a target="_blank" rel="noopener" href="https://www.v2ex.com/t/1218521">来源</a></p>
-</li>
-<li><p><strong>AI Agent 自主经济闭环面临合规深渊</strong>：变现模式正从“AI 辅助人”向“AI Agent 自主赚钱”跃迁，Crypto+AI 赛道爆发，Agent 拥有独立钱包自主接单。但现行法律不承认 AI 作为独立经济主体，<strong>幻觉导致的资金损失与责任归属</strong>成为致命痛点，亟待监管与托管层介入。</p>
-</li>
-</ul>
-<h2>⭐ 开源 TOP 项目</h2>
-<ul>
-<li><p><strong><a target="_blank" rel="noopener" href="https://github.com/mvanhorn/last30days-skill">mvanhorn/last30days-skill</a></strong>：跨 Reddit/X/YouTube 全网高信源聚合技能插件，直击 Agent 信息检索幻觉痛点，证明<strong>垂直 Skill</strong> 比通用规划更有价值。 <a target="_blank" rel="noopener" href="https://github.com/mvanhorn/last30days-skill">来源</a></p>
-</li>
-<li><p><strong><a target="_blank" rel="noopener" href="https://github.com/Leonxlnx/taste-skill">Leonxlnx/taste-skill</a></strong>：专攻“反庸俗化”输出的技能插件，解决 LLM 生成“正确的废话”顽疾，反其道而行切入审美与内容质量过滤工作流。 <a target="_blank" rel="noopener" href="https://github.com/Leonxlnx/taste-skill">来源</a></p>
-</li>
-<li><p><strong><a target="_blank" rel="noopener" href="https://github.com/NousResearch/hermes-agent">NousResearch/hermes-agent</a></strong>：试图通过“成长性”与全流程自动化打破 Agent 框架同质化僵局，但在 Skill 微生态爆发的大趋势下，底层调度逻辑的护城河正在瓦解。 <a target="_blank" rel="noopener" href="https://github.com/NousResearch/hermes-agent">来源</a></p>
-</li>
-<li><p><strong><a target="_blank" rel="noopener" href="https://github.com/RyanCodrai/turbovec">RyanCodrai/turbovec</a></strong>：用 Rust 重写向量索引，为 RAG 与推理提供极致性能底座，是当前大模型底层降本增效的典型代表。 <a target="_blank" rel="noopener" href="https://github.com/RyanCodrai/turbovec">来源</a></p>
-</li>
-</ul>
-<h2>💬 社媒分享</h2>
-<ul>
-<li><p><strong>AI 编程的“半成品”交付与挫败感蔓延</strong>：社区热议 AI 工具的营销话术（“一键搞定”）与实际体验严重脱节。用户用处理简单报错的思维去调用自动化 Agent，结果陷入无休止的 Debug 循环。<strong>预期失控</strong>正在消耗开发者对 AI Coding 的信任，KOL 急需进行“额度与能力预期管理”。 <a target="_blank" rel="noopener" href="https://www.v2ex.com/t/1218604">来源</a></p>
-</li>
-<li><p><strong>终端正在夺回 AI Coding 的主导权，IDE 沦为“皮肤”</strong>：相比于受限于 UI 线程和 API 框架的 IDE 插件，CLI 拥有对文件系统、进程树的原生控制权。在多文件编排、跑测试的闭环场景下，CLI 的管道化处理能力远超 GUI，开发者需立即<strong>重塑终端工作流</strong>，习惯以 Task 级粒度向 Agent 下达指令。 <a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-code/releases/tag/v2.1.167">来源</a></p>
-</li>
-<li><p><strong>Skill 碎片化引发兼容性灾难担忧</strong>：大V警告，缺乏统一标准的 Skill 接口正让开发者疲于适配不同框架，这可能重走 ChatGPT 早期 Plugins 生态废弃的老路。呼吁停止造第四五十个 Agent 轮子，优先绑定开放框架分发高复用插件。 <a target="_blank" rel="noopener" href="https://github.com/NousResearch/hermes-agent">来源</a></p>
-</li>
-</ul>
-<h2>💻 AI Coding</h2>
-<ul>
-<li><p><strong>Claude Code 连续 Bug fix 暴露深水区风险</strong>：连续静默修复说明 Agent 在真实本地环境遭遇大量长尾崩溃。开发者引入 Claude Code 作主力 Pair Programmer 时，<strong>务必锁定稳定版本</strong>，切忌盲目追新，关键业务必须配置回退机制与超时熔断。 <a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-code/releases/tag/v2.1.168">来源</a></p>
-</li>
-<li><p><strong>企业级 Coding Agent 架构应转向 Rust + 隔离运行时</strong>：Codex CLI Rust 化确立了 AI 自动执行代码的沙箱安全标准。企业构建内部 Agent 时，应尽早放弃纯 Node.js/Python 宿主进程方案，<strong>转向 Rust + 隔离运行时架构</strong>，防止 LLM 生成的恶意代码击穿宿主环境。 <a target="_blank" rel="noopener" href="https://github.com/openai/codex/releases/tag/rust-v0.138.0-alpha.6">来源</a></p>
-</li>
-<li><p><strong>CLI Agent 需强制加入人工审查节点</strong>：纯 CLI 形态在复杂重构时的“黑盒感”极易引发失控焦虑。建议将 CLI Agent 的输出通过管道接入 Git 的 pre-commit hook，<strong>强制加入人工审查节点</strong>，防止 Agent 产生不可逆的破坏。 <a target="_blank" rel="noopener" href="https://github.com/openai/codex/releases/tag/rusty-v8-v149.2.0">来源</a></p>
-</li>
-</ul>
-<h2>💡 发现机会</h2>
-<ul>
-<li><p><strong>AI 劳动力编排与质检 SaaS</strong>：避开“AI 代工”泥潭，转向开发垂直行业的自动化工作流 SaaS（如电商一键多语言上新+合规审查），或提供 AI 外包团队的质控与交付管理工具，赚取“卖水和铲子”的利润。 <a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">来源</a></p>
-</li>
-<li><p><strong>AI Agent 的财务托管与审计层</strong>：针对 AI 自主赚钱场景的合规与安全痛点，开发多签钱包、AI 交易行为审计链、或“人在回路”的资金风控 API，为 Web3 与 AI 交叉领域提供硬核安全垫。 <a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">来源</a></p>
-</li>
-<li><p><strong>反 AI 垃圾治理与“人类信任锚点”溢价平台</strong>：AiToEarn 泛滥必催生海量低质内容。创业机会在于：1) 做垂直领域的 AI 内容过滤与事实核查 API；2) 打造“100%纯人类产出”的 C 端品牌溢价平台，在文案、设计等品类将“人类原创”转化为高客单价卖点。 <a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">来源</a></p>
-</li>
-<li><p><strong>动态变现情报即服务（IaaS）</strong>：静态的 AI 搞钱开源库极易失效，动态验证的变现情报订阅是刚需。建立实时验证的“AI 变现情报库”，监控平台封禁与 API 价格波动，以订阅制提供高时效性剧本，但需严控声誉风险。 <a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">来源</a></p>
+<li><p><strong>提示词资产平台化，fka/prompts.chat 登顶 Hugging Face</strong>：随着提示词工程从散装文本走向标准化数据资产，fka/prompts.chat 数据集镜像以极高热度登顶 Hugging Face。开源社区开始以数据集和插件的形式沉淀提示词资产，标志着 Prompt 正式从“经验分享”升级为<strong>可复用、可交易的平台化数据基础设施</strong>。<a target="_blank" rel="noopener" href="https://huggingface.co/datasets/fka/prompts.chat">来源</a></p>
 </li>
 </ul>
 <hr>
-<p><em>报告生成时间：2026-06-08</em>
-<em>数据来源：GitHub Trending, HuggingFace, V2EX, OpenAI Releases, Anthropic Releases</em></p>
+<h2>🔬 前沿研究</h2>
+<ul>
+<li><p><strong>Rust 化向量索引突破，turbovec 直击 RAG 检索性能瓶颈</strong>：<a target="_blank" rel="noopener" href="https://github.com/RyanCodrai/turbovec">RyanCodrai/turbovec</a> 使用 Rust 编写向量索引并基于 TurboQuant 优化，直指 RAG 链路的检索性能与内存安全痛点。AI 基础设施正经历从 Python 向 <strong>Rust/C++ 的全面重构</strong>，在算力成本高企的当下，极致的比特效率压榨成为突围硬通货。<a target="_blank" rel="noopener" href="https://github.com/RyanCodrai/turbovec">来源</a></p>
+</li>
+<li><p><strong>端侧推理基石演进，llama.cpp 持续霸榜印证本地化需求</strong>：老牌顶流 <a target="_blank" rel="noopener" href="https://github.com/ggml-org/llama.cpp">ggml-org/llama.cpp</a> 以纯 C/C++ 架构长期统治本地推理生态，其繁荣本质上是离线/端侧推理的底层基石。结合近期离线生存计算机 Project Nomad 的出现，开发者对<strong>云端黑盒的防御心理</strong>及边缘计算需求正在催生“数字生存主义”开源分支。<a target="_blank" rel="noopener" href="https://github.com/ggml-org/llama.cpp">来源</a></p>
+</li>
+<li><p><strong>提示词工程终局：从经验主义走向数据驱动微调</strong>：伴随 prompts.chat 等数据集的火爆，提示词研究正在从单纯的“技巧拼凑”转向系统化的数据资产沉淀。高质量的提示词集合正成为<strong>垂直模型微调的核心语料</strong>，重塑模型对齐与能力激发的研究范式。<a target="_blank" rel="noopener" href="https://huggingface.co/datasets/fka/prompts.chat">来源</a></p>
+</li>
+</ul>
+<hr>
+<h2>🌍 行业展望与社会影响</h2>
+<ul>
+<li><p><strong>iPhone 17“暖手宝”事件：硬件神话褪色与系统级信任危机</strong>：V2EX 社区爆发大量关于 iPhone 17 严重发热与掉电的反馈，用户在执行 DFU 恢复等极端排查后依旧无解。待机发烫直指 <strong>iOS 底层进程死循环或电源管理 IC 失控</strong>。此类“无解发热”一旦从小众极客圈向大众蔓延，将形成灾难性的群体心智，品牌方亟需官方诊断路径与补丁兜底。<a target="_blank" rel="noopener" href="https://www.v2ex.com/t/1218521">来源</a></p>
+</li>
+<li><p><strong>ChatGPT Plus“秒没”额度：算力消耗认知错位与跨区风控暗雷</strong>：土区 App Store 订阅用户反映使用 Codex 半小时即耗尽额度。这打破了“Plus 额度用不完”的文本对话低消耗认知——Agent 模式下的多步推理与自动化试错，Token 吞吐量呈<strong>指数级暴增</strong>。同时，跨区订阅极易触发异地风控导致暗降优先级，重度开发者需摒弃薅羊毛心态，回归官方渠道保障算力配额稳定性。<a target="_blank" rel="noopener" href="https://www.v2ex.com/t/1218604">来源</a></p>
+</li>
+<li><p><strong>极客社区“绝望文”正成为最致命的声誉炸弹</strong>：无论是 iPhone 发热还是 ChatGPT 额度耗尽，均遵循“正统解法全失效→转向社区发声”的传播路径。V2EX 等社区的高技术素养抱怨带有详尽排雷日志，触碰了官方文档盲区。厂商若仍以客服套话应对，必将遭遇反噬，<strong>技术团队直接下场认领问题</strong>已成为危机公关的唯一解。<a target="_blank" rel="noopener" href="https://www.v2ex.com/t/1218521">来源</a></p>
+</li>
+</ul>
+<hr>
+<h2>⭐ 开源 TOP 项目</h2>
+<ul>
+<li><p><strong>NousResearch/hermes-agent</strong>：主打开源 Agent“伴随式成长”（grows with you）的动态能力扩展框架。标志着 Agent 竞争已从底层通用框架内卷，全面转向<strong>可插拔微技能</strong>生态。但需警惕技能碎片化带来的多技能编排上下文灾难。<a target="_blank" rel="noopener" href="https://github.com/NousResearch/hermes-agent">来源</a></p>
+</li>
+<li><p><strong>RyanCodrai/turbovec</strong>：基于 Rust 与 TurboQuant 的高性能向量索引库。践行“底层 Rust + 接口 Python”的混合架构，在计算密集型核心链路上压榨极致性能，同时兼顾开发者体验，为 RAG 检索提效提供了优秀范本。<a target="_blank" rel="noopener" href="https://github.com/RyanCodrai/turbovec">来源</a></p>
+</li>
+<li><p><strong>垂直微技能双星：last30days-skill 与 taste-skill</strong>：<a target="_blank" rel="noopener" href="https://github.com/mvanhorn/last30days-skill">last30days-skill</a> 专攻跨平台信息聚合降噪，<a target="_blank" rel="noopener" href="https://github.com/Leonxlnx/taste-skill">taste-skill</a> 则专治 AI“废话文学”提升审美。两者不再卷通用推理，而是<strong>精准解决特定场景痛点</strong>，抢占主流框架技能市场比自建框架更具变现潜力。<a target="_blank" rel="noopener" href="https://github.com/mvanhorn/last30days-skill">来源1</a> <a target="_blank" rel="noopener" href="https://github.com/Leonxlnx/taste-skill">来源2</a></p>
+</li>
+</ul>
+<hr>
+<h2>💬 社媒分享</h2>
+<ul>
+<li><p><strong>@V2EX_User_A</strong>：“iPhone 17 待机发烫如同暖手宝，DFU 刷机、关后台全试了依旧无解，这绝对不是 App 级别的 Bug，是 iOS 底层电源管理崩了。” —— 硬核排雷贴揭示系统级异常，苹果硬件神话正面临续航崩塌的信任危机。<a target="_blank" rel="noopener" href="https://www.v2ex.com/t/1218521">来源</a></p>
+</li>
+<li><p><strong>@V2EX_User_B</strong>：“用土区 Plus 跑 Codex，半小时额度秒没。别以为 Agent 还是个聊天框，它的算力消耗是聊天的一万倍，薅羊毛的心态搞 AI 开发迟早被反噬。” —— 打破用户对 AI 算力消耗的线性认知误区，Agent 时代的计费透明度亟待重塑。<a target="_blank" rel="noopener" href="https://www.v2ex.com/t/1218604">来源</a></p>
+</li>
+<li><p><strong>社区热议</strong>：AI 变现路径开源库 <a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">yikart/AiToEarn</a> 引爆讨论，C 端用户对“一键跑通商业闭环”的极度饥渴，印证了“卖铲子不如卖挖矿地图”的卖水人逻辑。<a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">来源</a></p>
+</li>
+</ul>
+<hr>
+<h2>💻 AI Coding</h2>
+<ul>
+<li><p><strong>Coding Agent 稳定性大于一切，Claude Code 紧急热修</strong>：对于拥有本地执行权限的 Coding Agent，盲目追新是大忌。Claude Code 连续修 Bug 暗示复杂工程下的技术债爆发，建议开发团队锁定稳定版运行，确认无致命挂起或文件误操作后再统一升级，<strong>生产环境的 Agent 稳定性远比新功能关键</strong>。<a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-code/releases/tag/v2.1.167">来源</a></p>
+</li>
+<li><p><strong>Codex CLI 的 Rust+V8 重构定义安全执行新范式</strong>：AI 写代码不再只是“看”，更要“跑”。Codex CLI 引入 V8 隔离沙盒执行 AI 生成的逻辑，Rust 保障底层安全，彻底阻断了恶意代码或无限循环对宿主机的破坏，标志着 <strong>AI 编程工具正式进入“沙盒与性能”深水区</strong>。<a target="_blank" rel="noopener" href="https://github.com/openai/codex/releases/tag/rust-v0.138.0-alpha.6">来源</a></p>
+</li>
+<li><p><strong>Agent 消耗预警机制成开发者工作流刚需</strong>：面对 Codex 等 Agent 工具的指数级 Token 消耗，开发者必须在使用中设置任务边界与消耗预警，避免陷入“无限试错→额度榨干→问题未解”的死循环。产品侧也亟需推出<strong>实时 Token 计费看板</strong>以降低用户焦虑。<a target="_blank" rel="noopener" href="https://www.v2ex.com/t/1218604">来源</a></p>
+</li>
+</ul>
+<hr>
+<h2>💡 发现机会</h2>
+<ul>
+<li><p><strong>AI 劳动力套利：从“提效工具”到“代工履约”的范式转移</strong>：<a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">yikart/AiToEarn</a> 证明零工经济正演变为算力与人工的差价游戏。纯信息差套利极易红海化，真正的破局点是构建<strong>垂直领域的自动化履约 SaaS</strong>（如全自动 SEO 外链生成 API），将套利模式升级为基础设施售卖。<a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">来源</a></p>
+</li>
+<li><p><strong>卖水人逻辑升级：封装一键跑通的“AI 副业基建”</strong>：C 端用户缺乏拼装 AI 工具链的能力，他们需要的是一键启动的赚钱模版。将散落的变现路径封装为标准化工作流产品（如自媒体矩阵分发工具箱），或打造高客单价陪伴式社群，实现从**“卖铲子”到“卖挖矿地图+铲子套装”**的跃迁。<a target="_blank" rel="noopener" href="https://github.com/yikart/AiToEarn">来源</a></p>
+</li>
+<li><p>**商业模式重构：</p>
+</li>
+</ul>
 
         </div>
         <div class="content-footer">
