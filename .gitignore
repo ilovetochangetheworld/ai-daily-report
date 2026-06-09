@@ -10,6 +10,12 @@ node_modules/
 # zh/
 # en/
 
+# XHS covers (generated at runtime, no need to commit)
+xhs_covers/
+
+# Draft files
+xhs_draft_*.md
+
 # OS
 .DS_Store
 Thumbs.db

@@ -35,6 +35,11 @@ jobs:
           ~/.local/bin/uv tool install twitter-cli
           ~/.local/bin/uv tool install xiaohongshu-cli
 
+      - name: 🖼️ Install image generation deps
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk 2>/dev/null || true
+          ~/.local/bin/uv pip install Pillow --system 2>/dev/null || pip3 install Pillow 2>/dev/null || true
+
       - name: 🍪 注入小红书 Cookie
         if: ${{ secrets.XHS_A1 }}
         run: |
