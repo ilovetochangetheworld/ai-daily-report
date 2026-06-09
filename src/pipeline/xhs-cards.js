@@ -98,8 +98,12 @@ function parseFullSections(markdown) {
             const body = sub.replace(/^### .*/m, '').trim();
             let summary = '';
 
-            // 提取 "核心判断" 行（两种格式：**核心判断：**xxx 和 **核心判断**：xxx）
-            const coreLine = body.match(/\*\*核心判断[：:]\*\*\s*(.+?)\*\*/s) ||
+            // 提取 "核心判断" 行（三种格式）
+            // 1. **核心判断：xxx** （整体在一对星号内）
+            // 2. **核心判断：**xxx** （冒号在第一对星号外结尾）
+            // 3. **核心判断**：xxx （冒号在星号外）
+            const coreLine = body.match(/\*\*核心判断[：:]\s*(.+?)\*\*/s) ||
+                             body.match(/\*\*核心判断[：:]\*\*\s*(.+?)\*\*/s) ||
                              body.match(/\*\*核心判断\*\*[：:]\s*(.+)/);
             if (coreLine) {
                 summary = coreLine[1].replace(/\*\*/g, '').trim();
@@ -113,8 +117,10 @@ function parseFullSections(markdown) {
                 }
             }
 
-            // 补充第一条关键证据（如果 summary 太短）
-            if (summary.length < 60) {
+            // 补充第一条关键证据（仅当核心判断未提取到时，或 summary 极短）
+            if (summary && coreLine) {
+                // 核心判断已成功提取，不再追加证据列表
+            } else if (summary.length < 40) {
                 const evidences = body.match(/^-\s+(.+)/gm) || [];
                 for (const ev of evidences) {
                     const evText = ev.replace(/^-\s+/, '').replace(/\[.*?\]\(.*?\)/g, '').replace(/\*\*/g, '').trim();
