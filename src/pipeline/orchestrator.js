@@ -244,10 +244,6 @@ async function analyzeAsExpert(dimension, date) {
     const signalsText = dimension.signals.length > 0
         ? dimension.signals.map(s => {
             let line = `- **${s.title}** (${s.source}) [来源](${s.url})\n  ${s.summary || '无摘要'}`;
-            if (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) {
-                line += `\n  📷 图片: ${s.image_url}`;
-            }
-            if (s.video_url) line += `\n  🎬 视频: ${s.video_url}`;
             return line;
         }).join('\n\n')
         : '（今日该维度暂无显著信号，请根据其他维度的关联趋势进行推测性分析）';
@@ -372,9 +368,7 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
 3. **每条资讯必须附带原始来源链接**
 4. 开源项目必须附链接
 5. 语言专业犀利，重要关键词加粗
-6. 整合专家洞察，不是复制粘贴
-7. **图片引用**：信号包含有意义的配图时使用 ![描述](URL)，禁止引用头像/logo/图标
-8. **视频引用**：信号含视频时使用 [▶ 观看视频](URL)`
+6. 整合专家洞察，不是复制粘贴`
         : `You are an AI daily report editor. Generate a structured daily report (English). Same 7-section structure. Same strict rules.`;
 
     const expertText = expertAnalyses.map(ea =>
@@ -385,13 +379,11 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
         .sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
     const topSignalsText = topSignals.map((s, i) => {
         let line = `${i + 1}. **${s.title}** [${s.source}](${s.url})`;
-        if (s.image_url && !s.image_url.includes('avatar')) line += ` [配图](${s.image_url})`;
-        if (s.video_url) line += ` [视频](${s.video_url})`;
         return line;
     }).join('\n');
 
     const userPrompt = isZh
-        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键：\n1. 必须输出全部7个板块\n2. 如果某板块信号不足，请基于行业趋势补充前瞻性分析\n3. 每条资讯必须有[来源](URL)链接\n4. 配图/视频在该条目下发插入`
+        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键：\n1. 必须输出全部7个板块\n2. 如果某板块信号不足，请基于行业趋势补充前瞻性分析\n3. 每条资讯必须有[来源](URL)链接`
         : `Generate the AI Daily Report for ${date} (English). Same rules.`;
 
     const { markdown } = await generateReportByTemplate(lang, date, classified, expertAnalyses, headline, allSignals);
@@ -424,28 +416,6 @@ async function generateReportByTemplate(lang, date, classified, expertAnalyses, 
         opensource: '⭐', social: '💬', coding: '💻', discovery: '💡'
     };
 
-    function buildMediaBlock(category) {
-        const catSignals = classified[category] || [];
-        const mediaItems = catSignals.filter(s =>
-            (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) || s.video_url
-        );
-        if (mediaItems.length === 0) return '';
-        let block = '\n\n---\n**📸 今日配图 & 视频**\n';
-        let count = 0;
-        for (const s of mediaItems) {
-            if (count >= 3) break;
-            if (s.image_url) {
-                block += `\n![${(s.title || '').slice(0, 30)}](${s.image_url})`;
-                count++;
-            }
-            if (s.video_url) {
-                block += `\n[▶ 观看视频：${(s.title || '').slice(0, 30)}](${s.video_url})`;
-                if (!s.image_url) count++;
-            }
-        }
-        return block;
-    }
-
     const sources = [...new Set(allSignals.map(s => s.source).filter(Boolean))];
 
     let markdown = `# AI 资讯日报 ${date}\n\n> 📰 ${headline}\n\n---\n\n`;
@@ -466,7 +436,7 @@ async function generateReportByTemplate(lang, date, classified, expertAnalyses, 
     for (const ea of expertAnalyses) {
         const icon = bucketIcons[ea.dimension] || '📌';
         const name = ea.name || ea.dimension;
-        markdown += `## ${icon} ${name}\n\n${ea.markdown}${buildMediaBlock(ea.dimension)}\n\n---\n\n`;
+        markdown += `## ${icon} ${name}\n\n${ea.markdown}\n\n---\n\n`;
     }
 
     // 数据来源
