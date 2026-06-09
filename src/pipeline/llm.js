@@ -10,8 +10,8 @@ const DEFAULT_MODEL = 'glm-5.1';
 
 function resolveModel(model) {
     if (!model) return DEFAULT_MODEL;
-    // 腾讯云 API 模型名区分大小写，强制小写
-    return model.toLowerCase();
+    // 不再强制小写——腾讯云等平台模型名区分大小写
+    return model;
 }
 
 function createClient() {
