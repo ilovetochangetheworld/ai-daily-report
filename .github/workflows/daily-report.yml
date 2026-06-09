@@ -38,7 +38,7 @@ jobs:
       - name: 🖼️ Install image generation deps
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk 2>/dev/null || true
-          ~/.local/bin/uv pip install Pillow --system 2>/dev/null || pip3 install Pillow 2>/dev/null || true
+          npx puppeteer browsers install chrome
 
       - name: 🍪 注入小红书 Cookie
         if: ${{ secrets.XHS_A1 }}
