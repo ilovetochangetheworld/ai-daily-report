@@ -26,9 +26,6 @@ function parseFullSections(markdown) {
         '开源 TOP 项目': '⭐',
         '社媒热议': '💬',
         '社媒分享': '💬',
-        'AI Coding & 工程': '💻',
-        'AI Coding & harness 工程': '💻',
-        '发现机会': '💡',
     };
 
     for (const sec of rawSections) {
@@ -60,16 +57,13 @@ function parseFullSections(markdown) {
             '开源TOP': '开源 TOP 项目',
             '安卓化': '开源 TOP 项目',
             '社媒': '社媒热议',
-            'Coding': 'AI Coding & 工程',
-            'harness': 'AI Coding & 工程',
-            '发现机会': '发现机会',
         };
         let normalizedTitle = '';
         for (const [key, val] of Object.entries(belongMap)) {
             if (sectionTitle.includes(key)) { normalizedTitle = val; break; }
         }
         // 如果自身已是标准板块名就不变
-        const standardNames = ['产品与功能更新', '前沿研究', '行业展望与社会影响', '开源 TOP 项目', '社媒热议', 'AI Coding & 工程', '发现机会'];
+        const standardNames = ['产品与功能更新', '前沿研究', '行业展望与社会影响', '开源 TOP 项目', '社媒热议'];
         if (standardNames.includes(sectionTitle)) {
             normalizedTitle = sectionTitle;
         }
