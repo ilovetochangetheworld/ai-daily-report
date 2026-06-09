@@ -188,12 +188,13 @@ async function generateHeadline(classified, date) {
 }
 
 async function generateReports(date, classified, dimensions, expertAnalyses, headline) {
+    const allSignals = Object.values(classified).flat();
     const reports = {};
-    reports.zh = await generateReport('zh', date, classified, expertAnalyses, headline);
+    reports.zh = await generateReport('zh', date, classified, expertAnalyses, headline, allSignals);
     return reports;
 }
 
-async function generateReport(lang, date, classified, expertAnalyses, headline) {
+async function generateReport(lang, date, classified, expertAnalyses, headline, allSignals) {
     const isZh = lang === 'zh';
 
     const topSignals = Object.values(classified).flat()
@@ -307,11 +308,100 @@ Output structure (Markdown):
     }).join('\n');
 
     const userPrompt = isZh
-        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 重要：每条资讯条目都必须附带可点击的来源链接！`
-        : `Please generate the AI Daily Report for ${date} (English version).\n\n**Top 5 Signals:**\n${topSignalsText}\n\n**Expert Analyses:**\n${expertText}\n\nPlease generate the complete report in Markdown. Headline: "${headline}"`;
+        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键提醒：\n1. 必须输出全部7个板块标题：🚀产品与功能更新、🔬前沿研究、🌍行业展望与社会影响、⭐开源TOP项目、💬社媒分享、💻AI Coding & harness工程、💡发现机会。缺一不可！\n2. 如果某板块信号不足，请基于行业趋势补充前瞻性分析\n3. 每条资讯必须有可点击的[来源](URL)链接\n4. 配图：如果信号标记了[配图]，在该条目下方插入 ![配图描述](配图URL)\n5. 视频：如果信号标记了[视频]，在该条目下方插入 [▶ 观看视频](视频URL)`
+        : `Please generate the AI Daily Report for ${date} (English version).\n\n**Top 5 Signals:**\n${topSignalsText}\n\n**Expert Analyses:**\n${expertText}\n\nPlease generate the complete report in Markdown. Headline: "${headline}"\n\n⚠️ Critical reminders:\n1. MUST output ALL 7 section headers: 🚀Product & Feature Updates, 🔬Frontier Research, 🌍Industry Outlook & Social Impact, ⭐Open Source Top Projects, 💬Social Media Highlights, 💻AI Coding & Harness Engineering, 💡Opportunity Discovery. None can be missing!\n2. If a section lacks signals, add forward-looking analysis based on industry trends\n3. Every news item must have a clickable [Source](URL) link\n4. Images: If a signal is marked [配图], insert ![description](imageURL) below that item\n5. Videos: If a signal is marked [视频], insert [▶ Watch Video](videoURL) below that item`;
 
     try {
-        const markdown = await callLLM(systemPrompt, userPrompt, { maxTokens: 5000 });
+        let markdown = await callLLM(systemPrompt, userPrompt, { maxTokens: 5000 });
+        
+        // 后处理：补全缺失板块
+        if (isZh) {
+            const requiredSections = [
+                ['## 🚀 产品与功能更新', '### 暂无显著更新\n今日该板块信号较少，但从整体趋势看，大模型能力迭代仍在加速，持续关注头部厂商动态。'],
+                ['## 🔬 前沿研究', '### 暂无显著论文\n今日该板块信号较少，arXiv 新论文可能集中在非 AI 分类，建议关注 cs.AI/cs.CL 领域动态。'],
+                ['## 🌍 行业展望与社会影响', '### 暂无显著事件\n今日该板块信号较少，但 AI 行业投融资和政策监管节奏未变，持续关注。'],
+                ['## ⭐ 开源 TOP 项目', '### 暂无新晋项目\n今日 GitHub AI 分类无显著新晋项目，持续关注明星项目动态。'],
+                ['## 💬 社媒分享', '### 暂无热议话题\n今日社媒 AI 话题相对平淡，建议关注大V动态。'],
+                ['## 💻 AI Coding & harness 工程', '### 暂无显著更新\n今日 AI 编程工具无重大更新，持续关注 Cursor/Copilot/Claude Code 等工具迭代。'],
+                ['## 💡 发现机会', '### 暂无显著信号\n基于当日趋势：AI Agent 落地场景、边缘端多模态、企业自动化仍是值得关注的方向。'],
+            ];
+            for (const [header, fallback] of requiredSections) {
+                if (!markdown.includes(header.trim())) {
+                    // 找到该板块应该插入的位置（在上一个板块末尾）
+                    const insertBefore = requiredSections.findIndex(([h]) => h.trim() === header.trim());
+                    let inserted = false;
+                    if (insertBefore > 0) {
+                        const prevHeader = requiredSections[insertBefore - 1][0];
+                        const prevIdx = markdown.lastIndexOf(prevHeader);
+                        if (prevIdx >= 0) {
+                            // 找下一个 ## 的位置
+                            const afterPrev = markdown.indexOf('\n## ', prevIdx + prevHeader.length);
+                            if (afterPrev >= 0) {
+                                markdown = markdown.slice(0, afterPrev) + '\n\n' + header + '\n\n' + fallback + markdown.slice(afterPrev);
+                                inserted = true;
+                            }
+                        }
+                    }
+                    if (!inserted) {
+                        markdown += '\n\n' + header + '\n\n' + fallback;
+                    }
+                }
+            }
+        }
+        
+        // 后处理：在每个板块末尾追加媒体引用（LLM 经常忽略图片视频指令）
+        if (isZh && allSignals && allSignals.length > 0) {
+            // 按信号分类收集媒体
+            const bucketMap = { product: '🚀', research: '🔬', industry: '🌍', opensource: '⭐', social: '💬', coding: '💻', discovery: '💡' };
+            const sectionHeaders = {
+                product: '## 🚀 产品与功能更新',
+                research: '## 🔬 前沿研究',
+                industry: '## 🌍 行业展望与社会影响',
+                opensource: '## ⭐ 开源 TOP 项目',
+                social: '## 💬 社媒分享',
+                coding: '## 💻 AI Coding & harness 工程',
+                discovery: '## 💡 发现机会',
+            };
+            const classified = {};
+            for (const s of allSignals) {
+                // 分类逻辑：复用信号的 category 或 source
+                const cat = s.category || (s.source === 'github' ? 'opensource' : s.source === 'v2ex' ? 'social' : 'product');
+                if (!classified[cat]) classified[cat] = [];
+                classified[cat].push(s);
+            }
+            
+            for (const [cat, header] of Object.entries(sectionHeaders)) {
+                const catSignals = classified[cat] || [];
+                const mediaItems = catSignals.filter(s => 
+                    (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) || s.video_url
+                );
+                if (mediaItems.length === 0) continue;
+                
+                const headerIdx = markdown.indexOf(header);
+                if (headerIdx < 0) continue;
+                
+                // 找到下一个 ## 的位置（板块结尾）
+                let nextSection = markdown.indexOf('\n## ', headerIdx + header.length);
+                if (nextSection < 0) nextSection = markdown.length;
+                
+                // 追加媒体
+                let mediaBlock = '\n\n---\n**📸 今日配图 & 视频**\n';
+                let count = 0;
+                for (const s of mediaItems) {
+                    if (count >= 3) break; // 每板块最多3张
+                    if (s.image_url) {
+                        mediaBlock += `\n![${(s.title || '').slice(0, 30)}](${s.image_url})`;
+                        count++;
+                    }
+                    if (s.video_url) {
+                        mediaBlock += `\n[▶ 观看视频：${(s.title || '').slice(0, 30)}](${s.video_url})`;
+                        if (!s.image_url) count++;
+                    }
+                }
+                markdown = markdown.slice(0, nextSection) + mediaBlock + markdown.slice(nextSection);
+            }
+        }
+        
         return { markdown };
     } catch (error) {
         console.error(`日报生成失败 (${lang}):`, error.message);
