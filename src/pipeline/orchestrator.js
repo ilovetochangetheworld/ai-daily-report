@@ -43,8 +43,10 @@ async function classifySignals(signals) {
 3. industry - 行业展望与社会影响（融资、IPO、政策法规、伦理争议、就业影响）
 4. opensource - 开源 TOP 项目（GitHub 新晋热门项目、重大版本发布、社区动态）
 5. social - 社媒分享（Twitter/X、Reddit、V2EX 上的热议话题、大V言论）
-6. coding - AI Coding（AI 编程工具动态、代码生成模型、Coding Agent、IDE 集成）
+6. coding - AI Coding & harness 工程（AI 编程工具动态、代码生成模型、Coding Agent、harness/脚手架工程、IDE 集成）
 7. discovery - 发现机会（新应用场景、市场空白、创业方向）
+
+⚠️ 必须将所有7个分类都输出，即使某个分类为空数组。
 
 返回 JSON 格式：{ "product": [...ids], "research": [...ids], "industry": [...ids], "opensource": [...ids], "social": [...ids], "coding": [...ids], "discovery": [...ids] }
 
@@ -52,8 +54,11 @@ async function classifySignals(signals) {
 
     const signalsText = signals.map(s => {
         let line = `[${s.id}] ${s.title} (${s.source}, 分数:${s.score})`;
-        if (s.image_url) line += ` [图片:${s.image_url}]`;
-        if (s.video_url) line += ` [视频:${s.video_url}]`;
+        // 只传递有意义的配图（排除小图标、头像）
+        if (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) {
+            line += ` [有意义配图]`;
+        }
+        if (s.video_url) line += ` [视频]`;
         return line;
     }).join('\n');
 
@@ -106,9 +111,9 @@ function generateDimensions(classified) {
             systemHint: '聚焦：大V言论、社区热议、观点碰撞。每条包含：核心观点、来源/作者、社区反应、是否值得深读。'
         },
         {
-            id: 'coding', name: 'AI Coding', nameEn: 'AI Coding Dynamics',
+            id: 'coding', name: 'AI Coding & harness 工程', nameEn: 'AI Coding & Harness Engineering',
             icon: '💻',
-            systemHint: '聚焦：AI 编程工具更新（Cursor/Copilot/Claude Code/Codex等）、代码生成模型、Coding Agent、IDE 集成、开发者工作流变革。每条包含：工具/模型名、更新内容、实测效果、对开发者的影响。'
+            systemHint: '聚焦：AI 编程工具更新（Cursor/Copilot/Claude Code/Codex等）、代码生成模型、Coding Agent、harness/脚手架工程、IDE 集成、开发者工作流变革。每条包含：工具/模型名、更新内容、实测效果、对开发者的影响。'
         },
         {
             id: 'discovery', name: '发现机会', nameEn: 'Opportunity Discovery',
@@ -116,8 +121,7 @@ function generateDimensions(classified) {
             systemHint: '聚焦：新应用场景、市场空白、创业方向、商业模式。每条包含：核心判断、关键证据、反向视角、实战建议。'
         },
     ];
-    return dims.filter(d => (classified[d.id] || []).length > 0)
-               .map(d => ({ ...d, signals: classified[d.id] || [] }));
+    return dims.map(d => ({ ...d, signals: classified[d.id] || [] }));
 }
 
 async function runExpertAnalysis(dimensions, date) {
@@ -136,16 +140,21 @@ ${dimension.systemHint}
 - 语言专业犀利，避免空话套话
 - 中文输出`;
 
-    const signalsText = dimension.signals.map(s => {
-        let line = `- **${s.title}** (${s.source}) [来源](${s.url})\n  ${s.summary || '无摘要'}`;
-        if (s.image_url) line += `\n  📷 图片: ${s.image_url}`;
-        if (s.video_url) line += `\n  🎬 视频: ${s.video_url}`;
-        return line;
-    }).join('\n\n');
+    const signalsText = dimension.signals.length > 0
+        ? dimension.signals.map(s => {
+            let line = `- **${s.title}** (${s.source}) [来源](${s.url})\n  ${s.summary || '无摘要'}`;
+            // 只引用有内容的图片（排除头像、logo、小图标）
+            if (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) {
+                line += `\n  📷 图片: ${s.image_url}`;
+            }
+            if (s.video_url) line += `\n  🎬 视频: ${s.video_url}`;
+            return line;
+        }).join('\n\n')
+        : '（今日该维度暂无显著信号，请根据其他维度的关联趋势进行推测性分析）';
 
     try {
         const markdown = await callLLM(systemPrompt,
-            `请分析以下与「${dimension.name}」相关的 ${dimension.signals.length} 条信号（日期：${date}）：\n\n${signalsText}\n\n生成 3-4 个深度分析点。`,
+            `请分析以下与「${dimension.name}」相关的 ${dimension.signals.length} 条信号（日期：${date}）：\n\n${signalsText}\n\n生成 2-3 个分析点。${dimension.signals.length === 0 ? '由于该维度无直接信号，请结合当日AI行业整体趋势给出前瞻性观点。' : ''}`,
             { maxTokens: 2500 }
         );
         return { dimension: dimension.id, name: dimension.name, nameEn: dimension.nameEn, icon: dimension.icon, markdown };
@@ -216,8 +225,8 @@ async function generateReport(lang, date, classified, expertAnalyses, headline) 
 ## 💬 社媒分享
 （大V言论、社区热议、值得关注的长文）
 
-## 💻 AI Coding
-（AI 编程工具更新、代码生成模型、Coding Agent 动态、开发者工作流变革）
+## 💻 AI Coding & harness 工程
+（AI 编程工具更新、代码生成模型、Coding Agent 动态、harness/脚手架工程、开发者工作流变革）
 
 ## 💡 发现机会
 （新应用场景、市场空白、创业方向）
@@ -227,15 +236,16 @@ async function generateReport(lang, date, classified, expertAnalyses, headline) 
 *报告生成时间：填入日期*
 *数据来源：列出所有来源*
 
-注意事项：
-- 每个板块至少2-3条内容
-- **每条资讯必须附带原始来源链接**，格式为在条目标题或来源名后加 [来源](URL)，优先使用下方提供的信号链接
-- 开源项目必须附 GitHub 链接
-- 语言专业犀利，重要关键词加粗
-- 不重复已有专家分析的原文，但要整合其洞察
-- **图片引用**：当信号包含图片URL时，在对应资讯条目下方适当位置插入图片引用，使用 Markdown 格式：![描述](图片URL)
-- **视频引用**：当信号包含视频URL时，在对应资讯条目下方适当位置插入视频引用，使用 HTML5 video 标签：<video controls src="视频URL" style="max-width:100%"></video>，也可用 [▶ 观看视频](视频URL) 作为替代链接
-- 图片和视频应放在资讯条目的正文之后、下一条资讯之前，每条信号最多引用一张图片和一个视频`
+⚠️ 严格规则：
+1. **所有7个板块必须全部输出**，即使某板块内容较少也不能省略
+2. 每个板块至少2-3条内容
+3. **每条资讯必须附带原始来源链接**，格式为 [来源](URL)，优先使用下方提供的信号链接
+4. 开源项目必须附 GitHub 链接
+5. 语言专业犀利，重要关键词加粗
+6. 不重复已有专家分析的原文，但要整合其洞察
+7. **图片引用**：仅当信号包含有实际内容意义的配图（如产品截图、模型效果图、信息图）时才引用，使用格式：![描述](图片URL)。**禁止引用头像、logo、小图标等无内容意义的图片**
+8. **视频引用**：当信号包含视频URL时，使用格式：[▶ 观看视频](视频URL)
+9. 图片和视频放在资讯条目正文之后、下一条资讯之前`
         : `You are an AI daily report editor. Generate a structured AI news daily report (English) based on expert analyses.
 
 Output structure (Markdown):
@@ -261,8 +271,8 @@ Output structure (Markdown):
 ## 💬 Social Media Highlights
 (Key influencer opinions, community discussions, worth-reading long posts)
 
-## 💻 AI Coding
-(AI coding tool updates, code generation models, Coding Agent dynamics, developer workflow changes)
+## 💻 AI Coding & Harness Engineering
+(AI coding tool updates, code generation models, Coding Agent dynamics, harness/scaffold engineering, developer workflow changes)
 
 ## 💡 Opportunity Discovery
 (New application scenarios, market gaps, startup directions)
@@ -272,15 +282,16 @@ Output structure (Markdown):
 *Report generated: fill in date*
 *Data sources: list all sources*
 
-Notes:
-- Each section should have at least 2-3 items
-- **Every news item must include a source link**, formatted as [Source](URL) after the title or source name, preferring the signal links provided below
-- Open source projects must include GitHub links
-- Use professional and sharp language, bold key terms
-- Do not repeat expert analysis verbatim, but integrate their insights
-- **Image references**: When a signal includes an image URL, insert an image reference below the corresponding news item using Markdown format: ![description](imageURL)
-- **Video references**: When a signal includes a video URL, insert a video reference below the corresponding news item using HTML5 video tag: <video controls src="videoURL" style="max-width:100%"></video>, or use [▶ Watch Video](videoURL) as an alternative link
-- Images and videos should be placed after the news item text and before the next item, at most one image and one video per signal`;
+⚠️ Strict rules:
+1. **ALL 7 sections MUST be output**, even if some sections have fewer items
+2. Each section should have at least 2-3 items
+3. **Every news item must include a source link**, formatted as [Source](URL), preferring the signal links provided below
+4. Open source projects must include GitHub links
+5. Use professional and sharp language, bold key terms
+6. Do not repeat expert analysis verbatim, but integrate their insights
+7. **Image references**: Only include images with meaningful content (product screenshots, model results, infographics), format: ![description](imageURL). **DO NOT include avatars, logos, icons**
+8. **Video references**: When a signal includes a video URL, use format: [▶ Watch Video](videoURL)
+9. Images and videos should be placed after the news item text and before the next item`;
 
     const expertText = expertAnalyses.map(ea =>
         `## ${ea.icon} ${isZh ? ea.name : ea.nameEn}\n\n${ea.markdown}`
@@ -288,7 +299,9 @@ Notes:
 
     const topSignalsText = topSignals.map((s, i) => {
         let line = `${i + 1}. **${s.title}** [${s.source}](${s.url}) (score:${s.score})`;
-        if (s.image_url) line += ` [图片](${s.image_url})`;
+        if (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) {
+            line += ` [配图](${s.image_url})`;
+        }
         if (s.video_url) line += ` [视频](${s.video_url})`;
         return line;
     }).join('\n');
