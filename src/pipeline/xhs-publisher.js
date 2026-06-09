@@ -17,17 +17,33 @@ const { callLLM } = require('./llm');
 async function generateXhsContent(fullMarkdown, date) {
     const systemPrompt = `你是资深科技分析师，负责把一份 AI 日报精炼成小红书版帖子。
 
-核心要求：
-1. 专业性优先——不是卖萌流水账，是有立场的分析
-2. 每条都带观点，不是中性的信息搬运
-3. 语气像在跟懂行的朋友聊天，不是写公关稿
-4. 去掉所有 AI 味：不要「核心判断」「反向视角」「实战建议」这类模板标签，不要过度加粗，不要规则三排列
-5. 选最有讨论价值的 5-6 条，每条 2-4 句话说到位
-6. 末尾加数据来源统计和话题标签
-7. 总字数控制在 600-800 字（小红书正文上限约1000字）
-8. 开头一句话点题，不要寒暄
+排版规范（必须严格遵守）：
 
-输出纯文本，不要 Markdown 标题语法（#），用数字编号即可。`;
+【标题】选当天最有冲击力的 1-2 条做标题，格式：「⚡️关键词短句｜AI日报M.D」，吸引人但不是标题党
+
+【正文结构】
+- 开头直接放标题（和笔记标题一致）
+- 空一行后放分隔线：━━━━━━━━━━━━━━━━
+- 每条新闻格式：
+  emoji 【方括号小标题】
+  空一行
+  正文内容（2-4句，带观点）
+  空一行
+- 每条用专属 emoji 区分类别：🧠研究/模型 🚀产品/发布 💰融资/商业 🤖Agent/工具 📊评估/数据 🧑‍💻招聘/人才 🔧开源/工程 💡机会/发现
+- 正文结束后放分隔线：━━━━━━━━━━━━━━━━
+- 底部固定放两行：
+  🔗 完整日报：ilovetochangetheworld.github.io/ai-daily-report
+  📊 今日数据：X条信号 → Y条精选 → Z维度深度分析
+- 最后换行放话题标签
+
+内容要求：
+1. 专业性优先——有立场的分析，不是中性信息搬运
+2. 语气像跟懂行的朋友聊天，不是写公关稿
+3. 去掉所有 AI 味：不要「核心判断」「反向视角」「实战建议」这类模板标签，不要过度加粗，不要规则三排列
+4. 选最有讨论价值的 5-6 条，每条说到位
+5. 总字数控制在 600-800 字
+
+输出纯文本，不要 Markdown 标题语法（#），用 emoji + 【】方括号做小标题。`;
 
     const userPrompt = `以下是 ${date} 的 AI 日报完整内容，请生成小红书版：
 
@@ -62,11 +78,15 @@ function generateXhsContentFallback(fullMarkdown, date) {
     const lines = fullMarkdown.split('\n');
     const sources = (lines[lines.length - 1] || '').replace(/^\*数据来源：/, '').replace(/\*$/, '');
 
-    let content = `AI 日报 · ${date}\n\n`;
-    content += `今日 ${picks.length} 条值得细看。\n\n`;
-    content += picks.join('\n\n');
-    content += `\n\n数据：${sources}`;
-    content += '\n\n#AI日报 #大模型 #AI行业趋势 #开源AI #AIAgent';
+    let content = `⚡️${picks[0]?.replace(/\|/g, '｜') || 'AI日报'}｜AI日报${date.substring(5).replace('-', '.')}\n\n`;
+    content += `━━━━━━━━━━━━━━━━\n\n`;
+    for (const pick of picks) {
+        content += `${pick}\n\n`;
+    }
+    content += `━━━━━━━━━━━━━━━━\n\n`;
+    content += `🔗 完整日报：ilovetochangetheworld.github.io/ai-daily-report\n`;
+    content += `📊 今日数据：${sources}\n\n`;
+    content += '#AI日报 #大模型 #AI行业趋势 #开源AI #AIAgent';
 
     return content;
 }
