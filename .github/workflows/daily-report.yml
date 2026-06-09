@@ -29,6 +29,12 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
+      - name: 🔧 Install CLI fetcher tools
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          ~/.local/bin/uv tool install twitter-cli
+          ~/.local/bin/uv tool install xiaohongshu-cli
+
       - name: 🔍 List available models (debug)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -41,6 +47,12 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
           OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+          PRODUCT_HUNT_TOKEN: ${{ secrets.PRODUCT_HUNT_TOKEN }}
+          TWITTER_AUTH_TOKEN: ${{ secrets.TWITTER_AUTH_TOKEN }}
+          TWITTER_CT0: ${{ secrets.TWITTER_CT0 }}
+          XHS_A1: ${{ secrets.XHS_A1 }}
+          XHS_WEB_SESSION: ${{ secrets.XHS_WEB_SESSION }}
         run: npm start
 
       - name: 📊 Generate index pages

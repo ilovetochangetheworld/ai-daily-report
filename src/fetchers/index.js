@@ -1,29 +1,49 @@
 /**
  * 统一导出所有抓取器
+ * 
+ * 数据源分层策略（参考 Agent-Reach）:
+ * - Tier 0: 零配置公开 API → HackerNews, GitHub Trending, V2EX, HuggingFace, AI Coding, arXiv
+ * - Tier 0+: 零配置互联网服务 → Jina Reader, Google News RSS, RSS Feeds
+ * - Tier 1: 需要 Cookie/CLI → Twitter/X, Reddit, 小红书, Product Hunt
  */
 
 const { HackerNewsFetcher } = require('./hackernews');
 const { GitHubTrendingFetcher } = require('./github-trending');
-const { ProductHuntFetcher } = require('./producthunt');
-const { RedditFetcher } = require('./reddit');
 const { HuggingFaceFetcher } = require('./huggingface');
 const { V2EXFetcher } = require('./v2ex');
-const { GoogleTrendsFetcher } = require('./google-trends');
-const { JiqizhixinFetcher } = require('./jiqizhixin');
-const { XinzhiyuanFetcher } = require('./xinzhiyuan');
 const { AICodingFetcher } = require('./ai-coding');
+const { ArxivFetcher } = require('./arxiv');
+const { ProductHuntFetcher } = require('./producthunt');
+
+// Tier 0+: Agent-Reach 启发的数据源
+const { JinaReaderFetcher } = require('./jina-reader');
+const { ExaSearchFetcher } = require('./exa-search');
+const { RSSFetcher } = require('./rss');
+
+// Tier 1: 需要 CLI 工具和 Cookie（自动降级）
+const { TwitterFetcher } = require('./twitter');
+const { RedditCLIFetcher } = require('./reddit-cli');
+const { XHSFetcher } = require('./xhs');
 
 const ALL_FETCHERS = [
+    // Tier 0: 零配置公开 API
     HackerNewsFetcher,
     GitHubTrendingFetcher,
-    ProductHuntFetcher,
-    RedditFetcher,
     HuggingFaceFetcher,
     V2EXFetcher,
-    GoogleTrendsFetcher,
-    JiqizhixinFetcher,
-    XinzhiyuanFetcher,
     AICodingFetcher,
+    ArxivFetcher,
+    ProductHuntFetcher,
+
+    // Tier 0+: 零配置互联网服务
+    JinaReaderFetcher,
+    ExaSearchFetcher,
+    RSSFetcher,
+
+    // Tier 1: 需要 CLI + Cookie（自动降级）
+    TwitterFetcher,
+    RedditCLIFetcher,
+    XHSFetcher,
 ];
 
 async function fetchAll() {

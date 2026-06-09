@@ -42,6 +42,10 @@ class GitHubTrendingFetcher extends BaseFetcher {
                 const isAI = this._isAIRelated(repoName, description, language);
                 if (!isAI) return;
                 
+                // 提取仓库 avatar 图片地址
+                const avatarImg = $el.find('img.avatar').attr('src') || '';
+                const imageUrl = avatarImg.startsWith('http') ? avatarImg : null;
+                
                 signals.push({
                     id: `gh-${repoName.replace('/', '-')}`,
                     title: repoName,
@@ -51,6 +55,7 @@ class GitHubTrendingFetcher extends BaseFetcher {
                     published_date: new Date().toISOString(),
                     score: starsToday || 10,
                     summary: description,
+                    image_url: imageUrl,
                     metadata: {
                         language: language,
                         stars_today: starsToday,

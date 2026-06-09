@@ -17,6 +17,21 @@ renderer.link = function(href, title, text) {
 };
 marked.setOptions({ renderer });
 
+/**
+ * 后处理：将 Markdown 生成的视频链接转为 HTML5 video 标签
+ * 格式 1: [▶ 观看视频](url) → <video controls src="url">
+ * 格式 2: [▶ 视频](url) → <video controls src="url">
+ */
+function postProcessHtml(html) {
+    // 替换视频链接为 HTML5 video 标签
+    // 匹配格式: <a href="xxx.mp4">含有"视频"的文字</a> 或 <a href="xxx/video/xxx">含"视频"文字</a>
+    html = html.replace(
+        /<a\s[^>]*href="(https?:\/\/[^"]*(?:\.mp4|\/video\/|vid\/|amplify_video|reddit_video|fallback_url)[^"]*)"[^>]*>([^<]*(?:观看视频|视频|Watch|Video|▶)[^<]*)<\/a>/gi,
+        '<video controls preload="metadata" style="max-width:100%;border-radius:8px;margin:12px 0"><source src="$1" type="video/mp4">浏览器不支持视频播放：<a href="$1" target="_blank" rel="noopener">$2</a></video>'
+    );
+    return html;
+}
+
 function saveReport(markdown, lang, date) {
     const dir = path.join(OUTPUT_BASE, lang, date.substring(0, 4));
     fs.mkdirSync(dir, { recursive: true });
@@ -62,16 +77,17 @@ const MARKDOWN_STYLES = `
         .markdown-body code { background: #1c2128; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: #f78166; }
         .markdown-body pre { background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; }
         .markdown-body pre code { background: none; padding: 0; color: #c9d1d9; }
+        .markdown-body img { max-width: 100%; border-radius: 8px; margin: 12px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .markdown-body video { max-width: 100%; border-radius: 8px; margin: 12px 0; }
         .markdown-body table { width: 100%; border-collapse: collapse; margin: 12px 0; }
         .markdown-body th, .markdown-body td { border: 1px solid #30363d; padding: 8px 12px; text-align: left; }
-        .markdown-body th { background: #21262d; color: #e6edf3; }
-        .markdown-body img { max-width: 100%; border-radius: 8px; }`;
+        .markdown-body th { background: #21262d; color: #e6edf3; }`;
 
 /**
  * 将 Markdown 渲染为完整的 HTML 页面
  */
 function renderMarkdownToFullHtml(markdown, lang, date) {
-    const htmlContent = marked.parse(markdown);
+    const htmlContent = postProcessHtml(marked.parse(markdown));
 
     return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -149,7 +165,7 @@ function generateIndex() {
         const mdPath = path.join(OUTPUT_BASE, 'zh', items[0].year, `${latestDate}.md`);
         if (fs.existsSync(mdPath)) {
             const md = fs.readFileSync(mdPath, 'utf8');
-            latestHtml = marked.parse(md);
+            latestHtml = postProcessHtml(marked.parse(md));
         }
     }
 

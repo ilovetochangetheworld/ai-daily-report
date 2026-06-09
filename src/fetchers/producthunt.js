@@ -48,6 +48,14 @@ class ProductHuntFetcher extends BaseFetcher {
                                         }
                                     }
                                 }
+                                thumbnail {
+                                    url
+                                }
+                                media {
+                                    type
+                                    url
+                                    videoUrl
+                                }
                             }
                         }
                     }
@@ -64,6 +72,18 @@ class ProductHuntFetcher extends BaseFetcher {
                 
                 const isAI = this._isAIRelated(post);
                 if (!isAI) continue;
+
+                // 提取截图/视频
+                let imageUrl = post.thumbnail?.url || null;
+                if (imageUrl && !imageUrl.startsWith('http')) imageUrl = null;
+                let videoUrl = null;
+                if (post.media && Array.isArray(post.media)) {
+                    for (const m of post.media) {
+                        if (m.type === 'video' && m.videoUrl && !videoUrl) {
+                            videoUrl = m.videoUrl;
+                        }
+                    }
+                }
                 
                 signals.push({
                     id: `ph-${post.id}`,
@@ -74,6 +94,8 @@ class ProductHuntFetcher extends BaseFetcher {
                     published_date: new Date(post.createdAt).toISOString(),
                     score: post.votesCount,
                     summary: post.tagline || post.description,
+                    image_url: imageUrl,
+                    video_url: videoUrl,
                     metadata: {
                         votes: post.votesCount,
                         comments: post.commentsCount,

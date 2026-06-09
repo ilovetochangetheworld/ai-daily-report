@@ -1,5 +1,7 @@
 /**
- * Hacker News 抓取器
+ * Hacker News Fetcher
+ * 使用 Algolia HN Search API，按热度获取 AI 相关帖子
+ * 零配置，无需 API Key
  */
 
 const axios = require('axios');
@@ -10,39 +12,62 @@ class HackerNewsFetcher extends BaseFetcher {
         super('Hacker News');
         this.client = axios.create({
             baseURL: 'https://hn.algolia.com/api/v1',
-            timeout: 10000,
+            timeout: 15000,
         });
     }
 
     async fetch() {
         const signals = [];
-        const keywords = [
-            'AI OR artificial intelligence OR machine learning OR deep learning OR neural network',
-            'LLM OR GPT OR Claude OR Gemini',
-            'OpenAI OR Anthropic OR DeepMind',
-        ];
 
         const now = new Date();
-        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const numericDate = Math.floor(yesterday.getTime() / 1000);
+        const twoDaysAgo = Math.floor((now.getTime() - 48 * 60 * 60 * 1000) / 1000);
 
-        for (const query of keywords) {
+        // 搜索策略 1: 时间窗口内（48h），低门槛
+        try {
+            const resp = await this.client.get('/search', {
+                params: {
+                    query: 'AI OR LLM OR GPT OR Claude OR Gemini OR OpenAI OR Anthropic',
+                    tags: 'story',
+                    hitsPerPage: 50,
+                    numericFilters: `created_at_i>${twoDaysAgo}`,
+                    attributesToRetrieve: 'objectID,title,url,points,num_comments,created_at',
+                },
+            });
+
+            for (const hit of (resp.data.hits || [])) {
+                if ((hit.points || 0) < 15) continue;
+                if (!this._isAIRelated(hit.title)) continue;
+
+                signals.push({
+                    id: `hn-${hit.objectID}`,
+                    title: hit.title,
+                    url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
+                    source: 'hackernews',
+                    category: 'discussion',
+                    published_date: hit.created_at,
+                    score: hit.points,
+                    metadata: { comments: hit.num_comments, hn_id: hit.objectID },
+                });
+            }
+        } catch (error) {
+            console.error('HN 近期搜索失败:', error.message);
+        }
+
+        // 搜索策略 2: 不限时间，高热度（兜底保底帖）
+        if (signals.length < 5) {
             try {
-                const response = await this.client.get('/search', {
+                const resp = await this.client.get('/search', {
                     params: {
-                        query,
+                        query: 'AI OR LLM OR machine learning',
                         tags: 'story',
-                        numericFilters: `created_at_i>${numericDate}`,
+                        hitsPerPage: 30,
+                        numericFilters: 'points>100',
                         attributesToRetrieve: 'objectID,title,url,points,num_comments,created_at',
-                        hitsPerPage: 50,
                     },
                 });
 
-                const hits = response.data.hits || [];
-                
-                for (const hit of hits) {
-                    if (hit.points < 20) continue;
-                    
+                for (const hit of (resp.data.hits || [])) {
+                    if (!this._isAIRelated(hit.title)) continue;
                     signals.push({
                         id: `hn-${hit.objectID}`,
                         title: hit.title,
@@ -51,17 +76,15 @@ class HackerNewsFetcher extends BaseFetcher {
                         category: 'discussion',
                         published_date: hit.created_at,
                         score: hit.points,
-                        metadata: {
-                            comments: hit.num_comments,
-                            hn_id: hit.objectID,
-                        },
+                        metadata: { comments: hit.num_comments, hn_id: hit.objectID },
                     });
                 }
             } catch (error) {
-                console.error(`HN 查询失败 (${query}):`, error.message);
+                console.error('HN 高热度搜索失败:', error.message);
             }
         }
 
+        // URL 去重
         const unique = new Map();
         for (const signal of signals) {
             const key = signal.url || signal.id;
@@ -71,6 +94,17 @@ class HackerNewsFetcher extends BaseFetcher {
         }
 
         return Array.from(unique.values());
+    }
+
+    _isAIRelated(title) {
+        if (!title) return false;
+        const keywords = [
+            'ai', 'llm', 'gpt', 'claude', 'gemini', 'openai', 'anthropic', 'deepmind',
+            'machine learning', 'deep learning', 'neural net', 'transformer', 'diffusion',
+            'model', 'agent', 'chatgpt', 'copilot', 'cursor', 'rag', 'embedding',
+        ];
+        const text = title.toLowerCase();
+        return keywords.some(kw => text.includes(kw));
     }
 }
 

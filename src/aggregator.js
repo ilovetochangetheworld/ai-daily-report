@@ -17,7 +17,15 @@ function aggregate(signals) {
         } else {
             const existing = uniqueMap.get(key);
             if (signal.score > existing.score) {
+                // 保留已有但缺失的 image_url/video_url
+                if (!signal.image_url && existing.image_url) signal.image_url = existing.image_url;
+                if (!signal.video_url && existing.video_url) signal.video_url = existing.video_url;
                 uniqueMap.set(key, signal);
+            }
+            // 即使分数较低，也补充缺失的媒体字段
+            else {
+                if (!existing.image_url && signal.image_url) existing.image_url = signal.image_url;
+                if (!existing.video_url && signal.video_url) existing.video_url = signal.video_url;
             }
         }
     }

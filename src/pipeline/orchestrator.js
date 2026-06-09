@@ -50,9 +50,12 @@ async function classifySignals(signals) {
 
 如果一条信号可能属于多个类别，放入最相关的那个。`;
 
-    const signalsText = signals.map(s =>
-        `[${s.id}] ${s.title} (${s.source}, 分数:${s.score})`
-    ).join('\n');
+    const signalsText = signals.map(s => {
+        let line = `[${s.id}] ${s.title} (${s.source}, 分数:${s.score})`;
+        if (s.image_url) line += ` [图片:${s.image_url}]`;
+        if (s.video_url) line += ` [视频:${s.video_url}]`;
+        return line;
+    }).join('\n');
 
     try {
         const result = await callLLMJson(systemPrompt, `请分类以下 ${signals.length} 条信号：\n\n${signalsText}`);
@@ -133,9 +136,12 @@ ${dimension.systemHint}
 - 语言专业犀利，避免空话套话
 - 中文输出`;
 
-    const signalsText = dimension.signals.map(s =>
-        `- **${s.title}** (${s.source}) [来源](${s.url})\n  ${s.summary || '无摘要'}`
-    ).join('\n\n');
+    const signalsText = dimension.signals.map(s => {
+        let line = `- **${s.title}** (${s.source}) [来源](${s.url})\n  ${s.summary || '无摘要'}`;
+        if (s.image_url) line += `\n  📷 图片: ${s.image_url}`;
+        if (s.video_url) line += `\n  🎬 视频: ${s.video_url}`;
+        return line;
+    }).join('\n\n');
 
     try {
         const markdown = await callLLM(systemPrompt,
@@ -226,7 +232,10 @@ async function generateReport(lang, date, classified, expertAnalyses, headline) 
 - **每条资讯必须附带原始来源链接**，格式为在条目标题或来源名后加 [来源](URL)，优先使用下方提供的信号链接
 - 开源项目必须附 GitHub 链接
 - 语言专业犀利，重要关键词加粗
-- 不重复已有专家分析的原文，但要整合其洞察`
+- 不重复已有专家分析的原文，但要整合其洞察
+- **图片引用**：当信号包含图片URL时，在对应资讯条目下方适当位置插入图片引用，使用 Markdown 格式：![描述](图片URL)
+- **视频引用**：当信号包含视频URL时，在对应资讯条目下方适当位置插入视频引用，使用 HTML5 video 标签：<video controls src="视频URL" style="max-width:100%"></video>，也可用 [▶ 观看视频](视频URL) 作为替代链接
+- 图片和视频应放在资讯条目的正文之后、下一条资讯之前，每条信号最多引用一张图片和一个视频`
         : `You are an AI daily report editor. Generate a structured AI news daily report (English) based on expert analyses.
 
 Output structure (Markdown):
@@ -261,15 +270,28 @@ Output structure (Markdown):
 ---
 
 *Report generated: fill in date*
-*Data sources: list all sources*`;
+*Data sources: list all sources*
+
+Notes:
+- Each section should have at least 2-3 items
+- **Every news item must include a source link**, formatted as [Source](URL) after the title or source name, preferring the signal links provided below
+- Open source projects must include GitHub links
+- Use professional and sharp language, bold key terms
+- Do not repeat expert analysis verbatim, but integrate their insights
+- **Image references**: When a signal includes an image URL, insert an image reference below the corresponding news item using Markdown format: ![description](imageURL)
+- **Video references**: When a signal includes a video URL, insert a video reference below the corresponding news item using HTML5 video tag: <video controls src="videoURL" style="max-width:100%"></video>, or use [▶ Watch Video](videoURL) as an alternative link
+- Images and videos should be placed after the news item text and before the next item, at most one image and one video per signal`;
 
     const expertText = expertAnalyses.map(ea =>
         `## ${ea.icon} ${isZh ? ea.name : ea.nameEn}\n\n${ea.markdown}`
     ).join('\n\n---\n\n');
 
-    const topSignalsText = topSignals.map((s, i) =>
-        `${i + 1}. **${s.title}** [${s.source}](${s.url}) (score:${s.score})`
-    ).join('\n');
+    const topSignalsText = topSignals.map((s, i) => {
+        let line = `${i + 1}. **${s.title}** [${s.source}](${s.url}) (score:${s.score})`;
+        if (s.image_url) line += ` [图片](${s.image_url})`;
+        if (s.video_url) line += ` [视频](${s.video_url})`;
+        return line;
+    }).join('\n');
 
     const userPrompt = isZh
         ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 重要：每条资讯条目都必须附带可点击的来源链接！`
