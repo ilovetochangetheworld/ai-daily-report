@@ -35,18 +35,40 @@ jobs:
           ~/.local/bin/uv tool install twitter-cli
           ~/.local/bin/uv tool install xiaohongshu-cli
 
-      - name: 🔍 List available models (debug)
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
-          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
-        run: node scripts/list-models.js
+      - name: 🍪 注入小红书 Cookie
+        if: ${{ secrets.XHS_A1 }}
+        run: |
+          mkdir -p ~/.xiaohongshu-cli
+          cat > ~/.xiaohongshu-cli/cookies.json << EOF
+          {
+            "a1": "${{ secrets.XHS_A1 }}",
+            "web_session": "${{ secrets.XHS_WEB_SESSION }}",
+            "saved_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          echo "✓ 小红书 Cookie 已注入"
+
+      - name: 🍪 注入 Twitter Cookie
+        if: ${{ secrets.TWITTER_AUTH_TOKEN }}
+        run: |
+          mkdir -p ~/.twitter-cli
+          cat > ~/.twitter-cli/cookies.json << EOF
+          {
+            "auth_token": "${{ secrets.TWITTER_AUTH_TOKEN }}",
+            "ct0": "${{ secrets.TWITTER_CT0 }}",
+            "saved_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          echo "✓ Twitter Cookie 已注入"
 
       - name: 🚀 Generate AI Daily Report
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          # 可选: glm-5.1 | minimax-m2.7
           OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          # 可选: rules | llm | (留空自动判断)
+          CLASSIFY_METHOD: ${{ secrets.CLASSIFY_METHOD }}
           EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
           PRODUCT_HUNT_TOKEN: ${{ secrets.PRODUCT_HUNT_TOKEN }}
           TWITTER_AUTH_TOKEN: ${{ secrets.TWITTER_AUTH_TOKEN }}

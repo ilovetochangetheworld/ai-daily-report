@@ -1,42 +1,63 @@
 /**
  * 多维度 AI 资讯分析管道
- * 结构参考 CloudFlare-AI-Insight-Daily，包含：
- * 1. 产品与功能更新 (Product Updates)
- * 2. 前沿研究 (Frontier Research)
- * 3. 行业展望与社会影响 (Industry Outlook & Social Impact)
- * 4. 开源 TOP 项目 (Open Source Top Projects)
- * 5. 社媒分享 (Social Media Highlights)
- * 6. AI Coding (AI 编程动态)
- * 7. 发现机会 (Opportunity Discovery)
+ * 支持多模型（glm-5.1, minimax-m2.7 等），质量优先
  */
 
-const { callLLM, callLLMJson } = require('./llm');
+const { callLLM, getModelConfig } = require('./llm');
+
+/**
+ * 对不同步骤，设定期望的 maxTokens
+ * 推理模型思考链很长，所以统一给足空间，不卡死
+ */
+const STEP_TOKENS = {
+    classify: 8000,     // 分类：推理模型需要大量思考
+    headline: 4000,     // 标题生成
+    expertAnalysis: 8000,  // 每个专家分析
+    finalReport: 16000,    // 最终报告组装
+};
 
 async function runPipeline({ date, signals }) {
-    console.log('  → 步骤 1/5: 分类信号...');
+    console.log('  → 步骤 1/4: 分类信号...');
     const classified = await classifySignals(signals);
     console.log(`    ✓ 分为 ${Object.keys(classified).length} 个类别`);
 
-    console.log('  → 步骤 2/5: 生成分析维度...');
+    console.log('  → 步骤 2/4: 生成分析维度...');
     const dimensions = generateDimensions(classified);
     console.log(`    ✓ 生成 ${dimensions.length} 个分析维度`);
 
-    console.log('  → 步骤 3/5: 专家分析（并行）...');
+    console.log('  → 步骤 3/4: 专家分析（3+2+2 批次）...');
     const expertAnalyses = await runExpertAnalysis(dimensions, date);
     console.log(`    ✓ ${expertAnalyses.length} 个专家分析完成`);
 
-    console.log('  → 步骤 4/5: 备选标题 & 摘要生成...');
+    console.log('  → 步骤 4/4: 生成日报...');
     const headline = await generateHeadline(classified, date);
     console.log(`    ✓ 标题: ${headline}`);
-
-    console.log('  → 步骤 5/5: 生成双语日报...');
     const reports = await generateReports(date, classified, dimensions, expertAnalyses, headline);
     console.log('    ✓ 日报生成完成\n');
 
     return reports;
 }
 
+/**
+ * 分类策略：
+ * - 推理模型：用关键词规则（推理模型做 JSON 输出浪费 token）
+ * - 普通模型：可以用 LLM 分类（更精准）
+ * 如果设置了 CLASSIFY_METHOD=llm 则强制用 LLM
+ */
 async function classifySignals(signals) {
+    const forceMethod = process.env.CLASSIFY_METHOD; // 'rules' | 'llm'
+    const modelConfig = getModelConfig(process.env.OPENAI_MODEL || 'glm-5.1');
+
+    if (forceMethod === 'llm' || (!forceMethod && modelConfig.type !== 'reasoning')) {
+        return classifySignalsByLLM(signals);
+    }
+    return classifySignalsByRules(signals);
+}
+
+/**
+ * LLM 分类器 — 更精准，适合非推理模型
+ */
+async function classifySignalsByLLM(signals) {
     const systemPrompt = `你是 AI 行业分析师。将输入的 AI 相关信号分类到以下 7 个维度：
 1. product - 产品与功能更新（新模型发布、产品功能迭代、API 更新、定价变化）
 2. research - 前沿研究（论文、新算法、模型架构创新、训练方法突破）
@@ -52,35 +73,97 @@ async function classifySignals(signals) {
 
 如果一条信号可能属于多个类别，放入最相关的那个。`;
 
-    const signalsText = signals.map(s => {
-        let line = `[${s.id}] ${s.title} (${s.source}, 分数:${s.score})`;
-        // 只传递有意义的配图（排除小图标、头像）
-        if (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) {
-            line += ` [有意义配图]`;
-        }
-        if (s.video_url) line += ` [视频]`;
-        return line;
-    }).join('\n');
+    const signalsText = signals.map(s => `[${s.id}] ${s.title} (${s.source}, 分数:${s.score})`).join('\n');
 
     try {
-        const result = await callLLMJson(systemPrompt, `请分类以下 ${signals.length} 条信号：\n\n${signalsText}`);
+        const { callLLMJson } = require('./llm');
+        const result = await callLLMJson(systemPrompt, `请分类以下 ${signals.length} 条信号：\n\n${signalsText}`, { maxTokens: STEP_TOKENS.classify });
         const buckets = ['product', 'research', 'industry', 'opensource', 'social', 'coding', 'discovery'];
         const classified = {};
         for (const bucket of buckets) {
             const ids = result[bucket] || [];
             classified[bucket] = signals.filter(s => ids.includes(s.id));
         }
+        console.log(`    ✓ LLM分类: ${Object.entries(classified).map(([k,v]) => `${k}:${v.length}`).join(', ')}`);
         return classified;
     } catch (error) {
-        console.error('分类失败，使用默认分类:', error.message);
-        const buckets = ['product', 'research', 'industry', 'opensource', 'social', 'coding', 'discovery'];
-        const classified = {};
-        const perBucket = Math.ceil(signals.length / 7);
-        for (let i = 0; i < 7; i++) {
-            classified[buckets[i]] = signals.slice(i * perBucket, (i + 1) * perBucket);
-        }
-        return classified;
+        console.error('LLM分类失败，降级为关键词:', error.message);
+        return classifySignalsByRules(signals);
     }
+}
+
+/**
+ * 关键词规则分类器 — 速度快，适合推理模型
+ */
+async function classifySignalsByRules(signals) {
+    const rules = {
+        research: {
+            keywords: ['arxiv', 'paper', '论文', '研究', 'model', '架构', '训练', '算法', 'benchmark', '评测', 'diffusion', 'transformer', 'rlhf', 'dpo', 'grpo', 'lora', 'finetune', '微调', 'CVPR', 'NeurIPS', 'ICML', 'ICLR', 'ACL', 'EMNLP'],
+            sources: ['arXiv'],
+        },
+        opensource: {
+            keywords: ['github', '开源', 'open source', 'stars', 'fork', 'release', '仓库', 'repo', 'hugging', 'model hub', 'ollama', 'llamafile', 'whisper', 'stable-diffusion', 'comfyui', 'langchain'],
+            sources: ['GitHub Trending', 'HuggingFace'],
+        },
+        industry: {
+            keywords: ['融资', '投资', '并购', 'IPO', '监管', '政策', '法规', '伦理', '隐私', '数据安全', '就业', '裁员', '估值', '上市', '制裁', '出口管制', '拨款', '法案', 'filing', 'SEC', 'antitrust', 'billion', '营收', 'revenue'],
+            sources: [],
+        },
+        coding: {
+            keywords: ['cursor', 'copilot', 'claude code', 'codex', 'coding agent', 'code generation', 'ide', 'vscode', '编程', '代码生成', 'devin', 'windsurf', 'augment', 'cline', 'aider', 'sweep', 'harness', '脚手架', 'scaffold', 'ai coding', 'aide'],
+            sources: ['ai-coding', 'V2EX'],
+        },
+        social: {
+            keywords: ['tweet', 'reddit', '热议', '观点', '争论', '网友', '大V', '吐槽', 'v2ex', 'thread'],
+            sources: ['Twitter/X', 'Reddit'],
+        },
+        product: {
+            keywords: ['发布', 'gpt', 'claude', 'gemini', 'openai', 'anthropic', 'google', '微软', 'meta', 'apple', '百度', '阿里', '字节', '腾讯', 'api', '定价', '功能', '上线', '更新', '升级', 'launch', 'release', 'beta', '新版', 'notebooklm', 'chatgpt', 'sora', 'midjourney', 'perplexity'],
+            sources: ['Product Hunt'],
+        },
+        discovery: {
+            keywords: ['创业', '机会', '市场', '空白', '商业模式', '应用场景', '需求', '痛点', '副业', '赚钱', 'AI应用', '落地', '垂直', '行业方案', '场景创新'],
+            sources: [],
+        },
+    };
+
+    const classified = {};
+    for (const bucket of Object.keys(rules)) {
+        classified[bucket] = [];
+    }
+
+    for (const signal of signals) {
+        const text = `${signal.title} ${signal.summary || ''} ${signal.source}`.toLowerCase();
+        let matched = false;
+
+        // 优先匹配来源
+        for (const [bucket, rule] of Object.entries(rules)) {
+            if (rule.sources.some(src => signal.source.includes(src))) {
+                classified[bucket].push(signal);
+                matched = true;
+                break;
+            }
+        }
+        if (matched) continue;
+
+        // 关键词匹配
+        const priority = ['research', 'opensource', 'coding', 'industry', 'social', 'product', 'discovery'];
+        for (const bucket of priority) {
+            const rule = rules[bucket];
+            if (rule.keywords.some(kw => text.includes(kw.toLowerCase()))) {
+                classified[bucket].push(signal);
+                matched = true;
+                break;
+            }
+        }
+
+        if (!matched) {
+            classified.product.push(signal);
+        }
+    }
+
+    console.log(`    ✓ 关键词分类: ${Object.entries(classified).map(([k,v]) => `${k}:${v.length}`).join(', ')}`);
+    return classified;
 }
 
 function generateDimensions(classified) {
@@ -125,12 +208,30 @@ function generateDimensions(classified) {
 }
 
 async function runExpertAnalysis(dimensions, date) {
-    return Promise.all(dimensions.map(dim => analyzeAsExpert(dim, date)));
+    // 推理模型耗时较长，分批次并行避免限频超时
+    const modelConfig = getModelConfig(process.env.OPENAI_MODEL || 'glm-5.1');
+    const batchSize = modelConfig.type === 'reasoning' ? 2 : 7; // 推理模型2个一批，普通模型全部并行
+
+    const batches = [];
+    for (let i = 0; i < dimensions.length; i += batchSize) {
+        batches.push(dimensions.slice(i, i + batchSize));
+    }
+
+    const results = [];
+    for (let i = 0; i < batches.length; i++) {
+        if (i > 0) {
+            const delay = modelConfig.type === 'reasoning' ? 3000 : 500;
+            console.log(`    ⏳ 批次 ${i + 1}/${batches.length}，等待 ${delay / 1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        const batchResults = await Promise.all(batches[i].map(dim => analyzeAsExpert(dim, date)));
+        results.push(...batchResults);
+    }
+    return results;
 }
 
 async function analyzeAsExpert(dimension, date) {
-    const systemPrompt = `你是「${dimension.name}」维度的资深分析师。
-${dimension.systemHint}
+    const systemPrompt = `你是「${dimension.name}」维度的资深分析师。\n${dimension.systemHint}
 
 输出规范：
 - 使用 Markdown 格式
@@ -143,7 +244,6 @@ ${dimension.systemHint}
     const signalsText = dimension.signals.length > 0
         ? dimension.signals.map(s => {
             let line = `- **${s.title}** (${s.source}) [来源](${s.url})\n  ${s.summary || '无摘要'}`;
-            // 只引用有内容的图片（排除头像、logo、小图标）
             if (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) {
                 line += `\n  📷 图片: ${s.image_url}`;
             }
@@ -155,7 +255,7 @@ ${dimension.systemHint}
     try {
         const markdown = await callLLM(systemPrompt,
             `请分析以下与「${dimension.name}」相关的 ${dimension.signals.length} 条信号（日期：${date}）：\n\n${signalsText}\n\n生成 2-3 个分析点。${dimension.signals.length === 0 ? '由于该维度无直接信号，请结合当日AI行业整体趋势给出前瞻性观点。' : ''}`,
-            { maxTokens: 2500 }
+            { maxTokens: STEP_TOKENS.expertAnalysis }
         );
         return { dimension: dimension.id, name: dimension.name, nameEn: dimension.nameEn, icon: dimension.icon, markdown };
     } catch (error) {
@@ -167,24 +267,47 @@ ${dimension.systemHint}
     }
 }
 
+/**
+ * 标题生成：
+ * - 非推理模型：用 LLM 生成更优美的标题
+ * - 推理模型：模板拼接（避免思考链占满 token）
+ */
 async function generateHeadline(classified, date) {
-    const topSignals = Object.values(classified).flat()
-        .sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
+    const modelConfig = getModelConfig(process.env.OPENAI_MODEL || 'glm-5.1');
 
-    const topText = topSignals.map((s, i) =>
-        `${i + 1}. ${s.title} (${s.source})`
-    ).join('\n');
+    if (modelConfig.type !== 'reasoning') {
+        // 非推理模型，用 LLM 生成高质量标题
+        const topSignals = Object.values(classified).flat()
+            .sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
+        const topText = topSignals.map((s, i) => `${i + 1}. ${s.title} (${s.source})`).join('\n');
 
-    try {
-        const headline = await callLLM(
-            '你是日报主编。根据今日 Top 5 AI 信号，生成一句话的今日头条摘要（30-50字，中文，突出最重大的变化）。只输出摘要，不要任何前缀。',
-            `日期: ${date}\n\nTop 5 信号:\n${topText}`,
-            { maxTokens: 100 }
-        );
-        return headline.trim();
-    } catch (error) {
-        return 'AI 行业日报';
+        try {
+            const headline = await callLLM(
+                '你是日报主编。根据今日 Top 5 AI 信号，生成一句话的今日头条摘要（30-60字，中文，突出最重大的变化和趋势）。只输出摘要，不要任何前缀。',
+                `日期: ${date}\n\nTop 5 信号:\n${topText}`,
+                { maxTokens: STEP_TOKENS.headline }
+            );
+            return headline.trim();
+        } catch (error) {
+            // 降级到模板
+        }
     }
+
+    // 模板生成（推理模型降级方案）
+    const topSignals = Object.values(classified).flat()
+        .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    // 优先选非 GitHub/数据集的真实新闻信号
+    const newsSignals = topSignals.filter(s =>
+        !s.source.includes('GitHub') && !s.source.includes('Hugging') && !s.source.includes('github')
+    );
+    const pickFrom = newsSignals.length >= 2 ? newsSignals : topSignals;
+
+    if (pickFrom.length === 0) return 'AI 行业日报';
+
+    const top = pickFrom.slice(0, 2);
+    const titles = top.map(s => s.title.replace(/[【】\[\]]/g, '').substring(0, 40));
+    return `${titles.join(' | ')} — AI日报 ${date}`;
 }
 
 async function generateReports(date, classified, dimensions, expertAnalyses, headline) {
@@ -195,10 +318,29 @@ async function generateReports(date, classified, dimensions, expertAnalyses, hea
 }
 
 async function generateReport(lang, date, classified, expertAnalyses, headline, allSignals) {
-    const isZh = lang === 'zh';
+    const modelConfig = getModelConfig(process.env.OPENAI_MODEL || 'glm-5.1');
 
-    const topSignals = Object.values(classified).flat()
-        .sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
+    // 非推理模型：尝试 LLM 组装最终日报（更流畅的叙事）
+    if (modelConfig.type !== 'reasoning') {
+        try {
+            const llmReport = await generateReportByLLM(lang, date, classified, expertAnalyses, headline, allSignals);
+            if (llmReport && llmReport.markdown && llmReport.markdown.length > 500) {
+                return llmReport;
+            }
+        } catch (error) {
+            console.error('LLM日报生成失败，降级为模板组装:', error.message);
+        }
+    }
+
+    // 模板组装（推理模型默认走这里，或在 LLM 失败时降级）
+    return generateReportByTemplate(lang, date, classified, expertAnalyses, headline, allSignals);
+}
+
+/**
+ * LLM 组装最终日报 — 用于非推理模型，叙事更流畅
+ */
+async function generateReportByLLM(lang, date, classified, expertAnalyses, headline, allSignals) {
+    const isZh = lang === 'zh';
 
     const systemPrompt = isZh
         ? `你是 AI 日报主编。基于专家分析，生成一份完整结构的 AI 资讯日报（中文）。
@@ -212,201 +354,125 @@ async function generateReport(lang, date, classified, expertAnalyses, headline, 
 ---
 
 ## 🚀 产品与功能更新
-（新模型发布、产品迭代、API 更新、定价变化）
-
 ## 🔬 前沿研究
-（最新论文、算法突破、训练方法创新）
-
 ## 🌍 行业展望与社会影响
-（融资并购、政策法规、伦理争议、就业影响）
-
 ## ⭐ 开源 TOP 项目
-（GitHub 热门项目、重大版本、社区动态，附项目链接）
-
 ## 💬 社媒分享
-（大V言论、社区热议、值得关注的长文）
-
 ## 💻 AI Coding & harness 工程
-（AI 编程工具更新、代码生成模型、Coding Agent 动态、harness/脚手架工程、开发者工作流变革）
-
 ## 💡 发现机会
-（新应用场景、市场空白、创业方向）
 
 ---
 
-*报告生成时间：填入日期*
+*报告生成时间：${date}*
 *数据来源：列出所有来源*
 
 ⚠️ 严格规则：
-1. **所有7个板块必须全部输出**，即使某板块内容较少也不能省略
+1. **所有7个板块必须全部输出**
 2. 每个板块至少2-3条内容
-3. **每条资讯必须附带原始来源链接**，格式为 [来源](URL)，优先使用下方提供的信号链接
-4. 开源项目必须附 GitHub 链接
+3. **每条资讯必须附带原始来源链接**
+4. 开源项目必须附链接
 5. 语言专业犀利，重要关键词加粗
-6. 不重复已有专家分析的原文，但要整合其洞察
-7. **图片引用**：仅当信号包含有实际内容意义的配图（如产品截图、模型效果图、信息图）时才引用，使用格式：![描述](图片URL)。**禁止引用头像、logo、小图标等无内容意义的图片**
-8. **视频引用**：当信号包含视频URL时，使用格式：[▶ 观看视频](视频URL)
-9. 图片和视频放在资讯条目正文之后、下一条资讯之前`
-        : `You are an AI daily report editor. Generate a structured AI news daily report (English) based on expert analyses.
-
-Output structure (Markdown):
-
-# AI Daily Report ${date}
-
-> 📰 ${headline}
-
----
-
-## 🚀 Product & Feature Updates
-(New model releases, product iterations, API updates, pricing changes)
-
-## 🔬 Frontier Research
-(Latest papers, algorithm breakthroughs, training innovations)
-
-## 🌍 Industry Outlook & Social Impact
-(Funding/M&A, policy/regulation, ethics, employment impact)
-
-## ⭐ Open Source Top Projects
-(Trending GitHub repos, major releases, community updates, with links)
-
-## 💬 Social Media Highlights
-(Key influencer opinions, community discussions, worth-reading long posts)
-
-## 💻 AI Coding & Harness Engineering
-(AI coding tool updates, code generation models, Coding Agent dynamics, harness/scaffold engineering, developer workflow changes)
-
-## 💡 Opportunity Discovery
-(New application scenarios, market gaps, startup directions)
-
----
-
-*Report generated: fill in date*
-*Data sources: list all sources*
-
-⚠️ Strict rules:
-1. **ALL 7 sections MUST be output**, even if some sections have fewer items
-2. Each section should have at least 2-3 items
-3. **Every news item must include a source link**, formatted as [Source](URL), preferring the signal links provided below
-4. Open source projects must include GitHub links
-5. Use professional and sharp language, bold key terms
-6. Do not repeat expert analysis verbatim, but integrate their insights
-7. **Image references**: Only include images with meaningful content (product screenshots, model results, infographics), format: ![description](imageURL). **DO NOT include avatars, logos, icons**
-8. **Video references**: When a signal includes a video URL, use format: [▶ Watch Video](videoURL)
-9. Images and videos should be placed after the news item text and before the next item`;
+6. 整合专家洞察，不是复制粘贴
+7. **图片引用**：信号包含有意义的配图时使用 ![描述](URL)，禁止引用头像/logo/图标
+8. **视频引用**：信号含视频时使用 [▶ 观看视频](URL)`
+        : `You are an AI daily report editor. Generate a structured daily report (English). Same 7-section structure. Same strict rules.`;
 
     const expertText = expertAnalyses.map(ea =>
         `## ${ea.icon} ${isZh ? ea.name : ea.nameEn}\n\n${ea.markdown}`
     ).join('\n\n---\n\n');
 
+    const topSignals = Object.values(classified).flat()
+        .sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
     const topSignalsText = topSignals.map((s, i) => {
-        let line = `${i + 1}. **${s.title}** [${s.source}](${s.url}) (score:${s.score})`;
-        if (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) {
-            line += ` [配图](${s.image_url})`;
-        }
+        let line = `${i + 1}. **${s.title}** [${s.source}](${s.url})`;
+        if (s.image_url && !s.image_url.includes('avatar')) line += ` [配图](${s.image_url})`;
         if (s.video_url) line += ` [视频](${s.video_url})`;
         return line;
     }).join('\n');
 
     const userPrompt = isZh
-        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键提醒：\n1. 必须输出全部7个板块标题：🚀产品与功能更新、🔬前沿研究、🌍行业展望与社会影响、⭐开源TOP项目、💬社媒分享、💻AI Coding & harness工程、💡发现机会。缺一不可！\n2. 如果某板块信号不足，请基于行业趋势补充前瞻性分析\n3. 每条资讯必须有可点击的[来源](URL)链接\n4. 配图：如果信号标记了[配图]，在该条目下方插入 ![配图描述](配图URL)\n5. 视频：如果信号标记了[视频]，在该条目下方插入 [▶ 观看视频](视频URL)`
-        : `Please generate the AI Daily Report for ${date} (English version).\n\n**Top 5 Signals:**\n${topSignalsText}\n\n**Expert Analyses:**\n${expertText}\n\nPlease generate the complete report in Markdown. Headline: "${headline}"\n\n⚠️ Critical reminders:\n1. MUST output ALL 7 section headers: 🚀Product & Feature Updates, 🔬Frontier Research, 🌍Industry Outlook & Social Impact, ⭐Open Source Top Projects, 💬Social Media Highlights, 💻AI Coding & Harness Engineering, 💡Opportunity Discovery. None can be missing!\n2. If a section lacks signals, add forward-looking analysis based on industry trends\n3. Every news item must have a clickable [Source](URL) link\n4. Images: If a signal is marked [配图], insert ![description](imageURL) below that item\n5. Videos: If a signal is marked [视频], insert [▶ Watch Video](videoURL) below that item`;
+        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键：\n1. 必须输出全部7个板块\n2. 如果某板块信号不足，请基于行业趋势补充前瞻性分析\n3. 每条资讯必须有[来源](URL)链接\n4. 配图/视频在该条目下发插入`
+        : `Generate the AI Daily Report for ${date} (English). Same rules.`;
 
+    const { markdown } = await generateReportByTemplate(lang, date, classified, expertAnalyses, headline, allSignals);
+    // 先用模板兜底，同时尝试 LLM
+
+    let llmMarkdown = '';
     try {
-        let markdown = await callLLM(systemPrompt, userPrompt, { maxTokens: 5000 });
-        
-        // 后处理：补全缺失板块
-        if (isZh) {
-            const requiredSections = [
-                ['## 🚀 产品与功能更新', '### 暂无显著更新\n今日该板块信号较少，但从整体趋势看，大模型能力迭代仍在加速，持续关注头部厂商动态。'],
-                ['## 🔬 前沿研究', '### 暂无显著论文\n今日该板块信号较少，arXiv 新论文可能集中在非 AI 分类，建议关注 cs.AI/cs.CL 领域动态。'],
-                ['## 🌍 行业展望与社会影响', '### 暂无显著事件\n今日该板块信号较少，但 AI 行业投融资和政策监管节奏未变，持续关注。'],
-                ['## ⭐ 开源 TOP 项目', '### 暂无新晋项目\n今日 GitHub AI 分类无显著新晋项目，持续关注明星项目动态。'],
-                ['## 💬 社媒分享', '### 暂无热议话题\n今日社媒 AI 话题相对平淡，建议关注大V动态。'],
-                ['## 💻 AI Coding & harness 工程', '### 暂无显著更新\n今日 AI 编程工具无重大更新，持续关注 Cursor/Copilot/Claude Code 等工具迭代。'],
-                ['## 💡 发现机会', '### 暂无显著信号\n基于当日趋势：AI Agent 落地场景、边缘端多模态、企业自动化仍是值得关注的方向。'],
-            ];
-            for (const [header, fallback] of requiredSections) {
-                if (!markdown.includes(header.trim())) {
-                    // 找到该板块应该插入的位置（在上一个板块末尾）
-                    const insertBefore = requiredSections.findIndex(([h]) => h.trim() === header.trim());
-                    let inserted = false;
-                    if (insertBefore > 0) {
-                        const prevHeader = requiredSections[insertBefore - 1][0];
-                        const prevIdx = markdown.lastIndexOf(prevHeader);
-                        if (prevIdx >= 0) {
-                            // 找下一个 ## 的位置
-                            const afterPrev = markdown.indexOf('\n## ', prevIdx + prevHeader.length);
-                            if (afterPrev >= 0) {
-                                markdown = markdown.slice(0, afterPrev) + '\n\n' + header + '\n\n' + fallback + markdown.slice(afterPrev);
-                                inserted = true;
-                            }
-                        }
-                    }
-                    if (!inserted) {
-                        markdown += '\n\n' + header + '\n\n' + fallback;
-                    }
-                }
-            }
-        }
-        
-        // 后处理：在每个板块末尾追加媒体引用（LLM 经常忽略图片视频指令）
-        if (isZh && allSignals && allSignals.length > 0) {
-            // 按信号分类收集媒体
-            const bucketMap = { product: '🚀', research: '🔬', industry: '🌍', opensource: '⭐', social: '💬', coding: '💻', discovery: '💡' };
-            const sectionHeaders = {
-                product: '## 🚀 产品与功能更新',
-                research: '## 🔬 前沿研究',
-                industry: '## 🌍 行业展望与社会影响',
-                opensource: '## ⭐ 开源 TOP 项目',
-                social: '## 💬 社媒分享',
-                coding: '## 💻 AI Coding & harness 工程',
-                discovery: '## 💡 发现机会',
-            };
-            const classified = {};
-            for (const s of allSignals) {
-                // 分类逻辑：复用信号的 category 或 source
-                const cat = s.category || (s.source === 'github' ? 'opensource' : s.source === 'v2ex' ? 'social' : 'product');
-                if (!classified[cat]) classified[cat] = [];
-                classified[cat].push(s);
-            }
-            
-            for (const [cat, header] of Object.entries(sectionHeaders)) {
-                const catSignals = classified[cat] || [];
-                const mediaItems = catSignals.filter(s => 
-                    (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) || s.video_url
-                );
-                if (mediaItems.length === 0) continue;
-                
-                const headerIdx = markdown.indexOf(header);
-                if (headerIdx < 0) continue;
-                
-                // 找到下一个 ## 的位置（板块结尾）
-                let nextSection = markdown.indexOf('\n## ', headerIdx + header.length);
-                if (nextSection < 0) nextSection = markdown.length;
-                
-                // 追加媒体
-                let mediaBlock = '\n\n---\n**📸 今日配图 & 视频**\n';
-                let count = 0;
-                for (const s of mediaItems) {
-                    if (count >= 3) break; // 每板块最多3张
-                    if (s.image_url) {
-                        mediaBlock += `\n![${(s.title || '').slice(0, 30)}](${s.image_url})`;
-                        count++;
-                    }
-                    if (s.video_url) {
-                        mediaBlock += `\n[▶ 观看视频：${(s.title || '').slice(0, 30)}](${s.video_url})`;
-                        if (!s.image_url) count++;
-                    }
-                }
-                markdown = markdown.slice(0, nextSection) + mediaBlock + markdown.slice(nextSection);
-            }
-        }
-        
+        llmMarkdown = await callLLM(systemPrompt, userPrompt, { maxTokens: STEP_TOKENS.finalReport });
+    } catch (e) {
         return { markdown };
-    } catch (error) {
-        console.error(`日报生成失败 (${lang}):`, error.message);
-        return { markdown: `# ${isZh ? 'AI 资讯日报' : 'AI Daily Report'} ${date}\n\n${isZh ? '生成失败' : 'Generation failed'}：${error.message}` };
     }
+
+    // 验证 LLM 输出完整性（所有7个板块都在）
+    const requiredSections = ['🚀', '🔬', '🌍', '⭐', '💬', '💻', '💡'];
+    const allPresent = requiredSections.every(icon => llmMarkdown.includes(icon));
+    if (!allPresent || llmMarkdown.length < 500) {
+        console.log('  ⚠ LLM日报不完整，使用模板组装');
+        return { markdown };
+    }
+
+    return { markdown: llmMarkdown };
+}
+
+/**
+ * 模板组装 — 稳定可靠，保证 7 板块完整
+ */
+async function generateReportByTemplate(lang, date, classified, expertAnalyses, headline, allSignals) {
+    const bucketIcons = {
+        product: '🚀', research: '🔬', industry: '🌍',
+        opensource: '⭐', social: '💬', coding: '💻', discovery: '💡'
+    };
+
+    function buildMediaBlock(category) {
+        const catSignals = classified[category] || [];
+        const mediaItems = catSignals.filter(s =>
+            (s.image_url && !s.image_url.includes('avatar') && !s.image_url.includes('s=40') && !s.image_url.includes('s=32')) || s.video_url
+        );
+        if (mediaItems.length === 0) return '';
+        let block = '\n\n---\n**📸 今日配图 & 视频**\n';
+        let count = 0;
+        for (const s of mediaItems) {
+            if (count >= 3) break;
+            if (s.image_url) {
+                block += `\n![${(s.title || '').slice(0, 30)}](${s.image_url})`;
+                count++;
+            }
+            if (s.video_url) {
+                block += `\n[▶ 观看视频：${(s.title || '').slice(0, 30)}](${s.video_url})`;
+                if (!s.image_url) count++;
+            }
+        }
+        return block;
+    }
+
+    const sources = [...new Set(allSignals.map(s => s.source).filter(Boolean))];
+
+    let markdown = `# AI 资讯日报 ${date}\n\n> 📰 ${headline}\n\n---\n\n`;
+
+    // Top 5 信号摘要
+    const topSignals = Object.values(classified).flat()
+        .sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
+
+    if (topSignals.length > 0) {
+        markdown += `## 📌 今日 Top 5 信号\n\n`;
+        for (const s of topSignals) {
+            markdown += `- **${s.title}** [${s.source}](${s.url})\n`;
+        }
+        markdown += `\n---\n\n`;
+    }
+
+    // 7 个板块
+    for (const ea of expertAnalyses) {
+        const icon = bucketIcons[ea.dimension] || '📌';
+        const name = ea.name || ea.dimension;
+        markdown += `## ${icon} ${name}\n\n${ea.markdown}${buildMediaBlock(ea.dimension)}\n\n---\n\n`;
+    }
+
+    // 数据来源
+    markdown += `*报告生成时间：${date}*\n\n*数据来源：${sources.join('、')}*\n`;
+
+    return { markdown };
 }
 
 module.exports = { runPipeline };
