@@ -105,15 +105,20 @@ async function publishToXhs({ date, fullMarkdown, signals }) {
     const xhsContent = await generateXhsContent(fullMarkdown, date);
     console.log(`  ✓ 内容生成完成 (${xhsContent.length} 字)`);
 
-    // 2. 从 LLM 生成的内容解析 sections（用于图片生成）
-    const sections = parseSectionsFromContent(xhsContent);
+    // 2. 从 LLM 生成的内容解析 sections（用于图片生成）；如果解析失败则从完整日报解析
+    let sections = parseSectionsFromContent(xhsContent);
+    if (sections.length < 3) {
+        console.log('  → 小红书内容板块不足，从完整日报解析...');
+        const { parseFullSections } = require('./xhs-cards');
+        sections = parseFullSections(fullMarkdown);
+    }
 
-    // 3. 生成封面 + 7张板块详解图 (HTML+Puppeteer)
+    // 3. 生成封面 + 板块详解图 (HTML+Puppeteer)，传入完整日报作为图片内容来源
     const coverDir = path.join(path.resolve(__dirname, '../..'), 'xhs_covers');
     console.log('  → 生成封面+板块详解图 (HTML+Puppeteer)...');
     let imagePaths = null;
     try {
-        imagePaths = await generateCoverAndCards(date, sections, coverDir);
+        imagePaths = await generateCoverAndCards(date, fullMarkdown, coverDir);
     } catch (e) {
         console.log('  ⚠ HTML截图生成失败:', e.message?.substring(0, 200));
     }
