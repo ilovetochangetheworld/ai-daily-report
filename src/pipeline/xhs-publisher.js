@@ -19,6 +19,9 @@ const SECTION_EMOJIS = {
     '行业展望与社会影响': '🌍',
     '开源 TOP 项目': '⭐',
     '社媒热议': '💬',
+    'AI Coding & 工程': '💻',
+    'AI Coding & harness 工程': '💻',
+    '发现机会': '💡',
 };
 
 /**

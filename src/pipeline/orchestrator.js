@@ -58,16 +58,18 @@ async function classifySignals(signals) {
  * LLM 分类器 — 更精准，适合非推理模型
  */
 async function classifySignalsByLLM(signals) {
-    const systemPrompt = `你是 AI 行业分析师。将输入的 AI 相关信号分类到以下 5 个维度：
-1. product - 产品与功能更新（新模型发布、产品迭代、API 更新、定价变化、AI 编程工具动态、Coding Agent、IDE 集成）
-2. research - 前沿研究（论文、新算法、模型架构创新、训练方法突破、评测基准）
-3. industry - 行业展望与社会影响（融资、IPO、政策法规、伦理争议、就业影响、新应用场景、市场机会）
-4. opensource - 开源 TOP 项目（GitHub 热门项目、重大版本发布、社区动态、开发者工具、开源模型）
-5. social - 社媒热议（Twitter/X、Reddit、V2EX、小红书上的热议话题、大V言论、社区讨论）
+    const systemPrompt = `你是 AI 行业分析师。将输入的 AI 相关信号分类到以下 7 个维度：
+1. product - 产品与功能更新（新模型发布、产品功能迭代、API 更新、定价变化）
+2. research - 前沿研究（论文、新算法、模型架构创新、训练方法突破）
+3. industry - 行业展望与社会影响（融资、IPO、政策法规、伦理争议、就业影响）
+4. opensource - 开源 TOP 项目（GitHub 新晋热门项目、重大版本发布、社区动态）
+5. social - 社媒热议（Twitter/X、Reddit、V2EX、小红书上的热议话题、大V言论）
+6. coding - AI Coding & 工程（AI 编程工具动态、代码生成模型、Coding Agent、IDE 集成）
+7. discovery - 发现机会（新应用场景、市场空白、创业方向、商业模式）
 
-⚠️ 必须将所有5个分类都输出，即使某个分类为空数组。
+⚠️ 必须将所有7个分类都输出，即使某个分类为空数组。
 
-返回 JSON 格式：{ "product": [...ids], "research": [...ids], "industry": [...ids], "opensource": [...ids], "social": [...ids] }
+返回 JSON 格式：{ "product": [...ids], "research": [...ids], "industry": [...ids], "opensource": [...ids], "social": [...ids], "coding": [...ids], "discovery": [...ids] }
 
 如果一条信号可能属于多个类别，放入最相关的那个。`;
 
@@ -76,7 +78,7 @@ async function classifySignalsByLLM(signals) {
     try {
         const { callLLMJson } = require('./llm');
         const result = await callLLMJson(systemPrompt, `请分类以下 ${signals.length} 条信号：\n\n${signalsText}`, { maxTokens: STEP_TOKENS.classify });
-        const buckets = ['product', 'research', 'industry', 'opensource', 'social'];
+        const buckets = ['product', 'research', 'industry', 'opensource', 'social', 'coding', 'discovery'];
         const classified = {};
         for (const bucket of buckets) {
             const ids = result[bucket] || [];
@@ -92,6 +94,7 @@ async function classifySignalsByLLM(signals) {
 
 /**
  * 关键词规则分类器 — 速度快，适合推理模型
+ * 关键词优先于来源（内容决定归属）
  */
 async function classifySignalsByRules(signals) {
     const rules = {
@@ -104,16 +107,24 @@ async function classifySignalsByRules(signals) {
             sources: ['GitHub Trending', 'HuggingFace'],
         },
         industry: {
-            keywords: ['融资', '投资', '并购', 'IPO', '监管', '政策', '法规', '伦理', '隐私', '数据安全', '就业', '裁员', '估值', '上市', '制裁', '出口管制', '拨款', '法案', 'filing', 'SEC', 'antitrust', 'billion', '营收', 'revenue', '创业', '机会', '市场', '商业模式', '应用场景', '痛点', '副业'],
+            keywords: ['融资', '投资', '并购', 'IPO', '监管', '政策', '法规', '伦理', '隐私', '数据安全', '就业', '裁员', '估值', '上市', '制裁', '出口管制', '拨款', '法案', 'filing', 'SEC', 'antitrust', 'billion', '营收', 'revenue'],
             sources: [],
         },
         social: {
             keywords: ['tweet', 'reddit', '热议', '观点', '争论', '网友', '大V', '吐槽', 'v2ex', 'thread', '小红书'],
             sources: ['Twitter/X', 'Reddit'],
         },
+        coding: {
+            keywords: ['cursor', 'copilot', 'claude code', 'codex', 'coding agent', 'code generation', 'ide', 'vscode', '编程', '代码生成', 'devin', 'windsurf', 'augment', 'cline', 'aider', 'sweep', 'harness', '脚手架', 'scaffold', 'ai coding', 'aide'],
+            sources: ['ai-coding', 'V2EX'],
+        },
         product: {
-            keywords: ['发布', 'gpt', 'claude', 'gemini', 'openai', 'anthropic', 'google', '微软', 'meta', 'apple', '百度', '阿里', '字节', '腾讯', 'api', '定价', '功能', '上线', '更新', '升级', 'launch', 'release', 'beta', '新版', 'notebooklm', 'chatgpt', 'sora', 'midjourney', 'perplexity', 'cursor', 'copilot', 'claude code', 'codex', 'coding agent', 'ide', 'vscode', 'devin', 'windsurf', 'augment', 'cline', 'aider', 'harness', 'ai coding', 'aide'],
+            keywords: ['发布', 'gpt', 'claude', 'gemini', 'openai', 'anthropic', 'google', '微软', 'meta', 'apple', '百度', '阿里', '字节', '腾讯', 'api', '定价', '功能', '上线', '更新', '升级', 'launch', 'release', 'beta', '新版', 'notebooklm', 'chatgpt', 'sora', 'midjourney', 'perplexity'],
             sources: ['Product Hunt'],
+        },
+        discovery: {
+            keywords: ['创业', '机会', '市场', '空白', '商业模式', '应用场景', '需求', '痛点', '副业', '赚钱', 'AI应用', '落地', '垂直', '行业方案', '场景创新'],
+            sources: [],
         },
     };
 
@@ -127,7 +138,7 @@ async function classifySignalsByRules(signals) {
         let matched = false;
 
         // 关键词匹配优先（内容决定归属）
-        const priority = ['research', 'opensource', 'industry', 'social', 'product'];
+        const priority = ['research', 'opensource', 'industry', 'social', 'coding', 'product', 'discovery'];
         for (const bucket of priority) {
             const rule = rules[bucket];
             if (rule.keywords.some(kw => text.includes(kw.toLowerCase()))) {
@@ -161,27 +172,37 @@ function generateDimensions(classified) {
         {
             id: 'product', name: '产品与功能更新', nameEn: 'Product & Feature Updates',
             icon: '🚀',
-            systemHint: '聚焦：新模型发布、产品迭代、API更新、定价策略、AI编程工具动态、Coding Agent、IDE集成。每条格式：一句突出贡献加粗标题 + 2-3句展开说明（含关键数据和影响）。保留原始来源链接 [来源名](URL)。中文输出。'
+            systemHint: '聚焦：新模型发布、产品迭代、API更新、定价策略变化。'
         },
         {
             id: 'research', name: '前沿研究', nameEn: 'Frontier Research',
             icon: '🔬',
-            systemHint: '聚焦：最新论文、算法突破、训练方法创新、评测基准更新。每条格式：一句突出贡献加粗标题 + 2-3句展开说明（含关键指标和对比）。保留原始来源链接。中文输出。'
+            systemHint: '聚焦：最新论文、算法突破、训练方法创新、评测基准更新。'
         },
         {
             id: 'industry', name: '行业展望与社会影响', nameEn: 'Industry Outlook & Social Impact',
             icon: '🌍',
-            systemHint: '聚焦：融资/并购/IPO、政策法规、伦理争议、就业影响、新应用场景、市场机会。每条格式：一句突出贡献加粗标题 + 2-3句展开说明（含利益方和影响分析）。保留原始来源链接。中文输出。'
+            systemHint: '聚焦：融资/并购/IPO、政策法规、伦理争议、就业影响。'
         },
         {
             id: 'opensource', name: '开源 TOP 项目', nameEn: 'Open Source Top Projects',
             icon: '⭐',
-            systemHint: '聚焦：GitHub热门新项目、重大版本发布、社区动态、开发者工具、开源模型。每条格式：项目名+链接 + 一句功能概述 + Stars/增长。保留原始链接。中文输出。'
+            systemHint: '聚焦：GitHub热门新项目、重大版本发布、社区动态。'
         },
         {
             id: 'social', name: '社媒热议', nameEn: 'Social Media Highlights',
             icon: '💬',
-            systemHint: '聚焦：大V言论、社区热议、观点碰撞、教程分享。每条格式：一句核心观点加粗 + 2-3句出处和社区反应。保留原始来源链接。中文输出。'
+            systemHint: '聚焦：大V言论、社区热议、观点碰撞。'
+        },
+        {
+            id: 'coding', name: 'AI Coding & 工程', nameEn: 'AI Coding & Engineering',
+            icon: '💻',
+            systemHint: '聚焦：AI编程工具更新（Cursor/Copilot/Claude Code/Codex等）、代码生成模型、Coding Agent、IDE集成、开发者工作流变革。'
+        },
+        {
+            id: 'discovery', name: '发现机会', nameEn: 'Opportunity Discovery',
+            icon: '💡',
+            systemHint: '聚焦：新应用场景、市场空白、创业方向、商业模式。'
         },
     ];
     return dims.map(d => ({ ...d, signals: classified[d.id] || [] }));
@@ -211,16 +232,16 @@ async function runExpertAnalysis(dimensions, date) {
 }
 
 async function analyzeAsExpert(dimension, date) {
-    const systemPrompt = `你是「${dimension.name}」维度的资深分析师。\n${dimension.systemHint}
+    const systemPrompt = `你是「${dimension.name}」维度的资深分析师。\\n${dimension.systemHint}
 
 输出规范：
 - 使用 Markdown 格式
 - 每个分析点以 ### 开头，包含简明标题
-- 每个分析点 2-4 句：一句加粗核心判断 + 2-3句展开（关键数据 + 影响/趋势）
+- 先给出一句核心判断（加粗），然后展开分析思路——你是怎么得出这个判断的，依据是什么，推演链条是什么
+- 不是每条都要写「反向视角」「实战建议」，只有确实有洞察价值时才写，不要凑模板
 - **引用信号时必须保留原始来源链接**，格式为 [来源名](URL)
 - 语言专业犀利，避免空话套话
-- 中文输出
-- 不要输出「反向视角」「实战建议」等模板骨架，有用就写，没用不凑`;
+- 中文输出`;
 
     const signalsText = dimension.signals.length > 0
         ? dimension.signals.map(s => {
@@ -335,6 +356,8 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
 ## 🌍 行业展望与社会影响
 ## ⭐ 开源 TOP 项目
 ## 💬 社媒热议
+## 💻 AI Coding & 工程
+## 💡 发现机会
 
 ---
 
@@ -342,14 +365,14 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
 *数据来源：列出所有来源*
 
 ⚠️ 严格规则：
-1. **所有5个板块必须全部输出**
+1. **所有7个板块必须全部输出**
 2. 每个板块2-4条内容
 3. **每条资讯必须附带原始来源链接**
 4. 开源项目必须附链接
 5. 语言专业犀利，重要关键词加粗
-6. 不要输出「反向视角」「实战建议」等模板骨架
+6. 分析要有思路——怎么得出判断的，推演链条是什么；不要凑「反向视角」「实战建议」等模板骨架
 7. 整合专家洞察，不是复制粘贴`
-        : `You are an AI daily report editor. Generate a structured daily report (English). Same 5-section structure. Same strict rules.`;
+        : `You are an AI daily report editor. Generate a structured daily report (English). Same 7-section structure. Same strict rules.`;
 
     const expertText = expertAnalyses.map(ea =>
         `## ${ea.icon} ${isZh ? ea.name : ea.nameEn}\n\n${ea.markdown}`
@@ -363,7 +386,7 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
     }).join('\n');
 
     const userPrompt = isZh
-        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键：\n1. 必须输出全部5个板块\n2. 如果某板块信号不足，请基于行业趋势补充前瞻性分析\n3. 每条资讯必须有[来源](URL)链接\n4. 不要凑「反向视角」「实战建议」等骨架`
+        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键：\n1. 必须输出全部7个板块\n2. 如果某板块信号不足，请基于行业趋势补充前瞻性分析\n3. 每条资讯必须有[来源](URL)链接\n4. 分析要有推演思路，不要凑模板骨架`
         : `Generate the AI Daily Report for ${date} (English). Same rules.`;
 
     const { markdown } = await generateReportByTemplate(lang, date, classified, expertAnalyses, headline, allSignals);
@@ -376,8 +399,8 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
         return { markdown };
     }
 
-    // 验证 LLM 输出完整性（所有5个板块都在）
-    const requiredSections = ['🚀', '🔬', '🌍', '⭐', '💬'];
+    // 验证 LLM 输出完整性（所有7个板块都在）
+    const requiredSections = ['🚀', '🔬', '🌍', '⭐', '💬', '💻', '💡'];
     const allPresent = requiredSections.every(icon => llmMarkdown.includes(icon));
     if (!allPresent || llmMarkdown.length < 500) {
         console.log('  ⚠ LLM日报不完整，使用模板组装');
@@ -393,7 +416,7 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
 async function generateReportByTemplate(lang, date, classified, expertAnalyses, headline, allSignals) {
     const bucketIcons = {
         product: '🚀', research: '🔬', industry: '🌍',
-        opensource: '⭐', social: '💬'
+        opensource: '⭐', social: '💬', coding: '💻', discovery: '💡'
     };
 
     const sources = [...new Set(allSignals.map(s => s.source).filter(Boolean))];
