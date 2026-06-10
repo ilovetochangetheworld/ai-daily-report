@@ -11,6 +11,7 @@ const os = require('os');
 const CARD_WIDTH = 1080;
 const CARD_HEIGHT = 1440;
 const FONT_STACK = "'Noto Sans CJK SC','PingFang SC','Microsoft YaHei','WenQuanYi Micro Hei',sans-serif";
+const BRAND_URL = 'ilovetochangetheworld.github.io/ai-daily-report';
 
 /**
  * 从日报 Markdown 解析出 7 板块的所有条目
@@ -92,7 +93,7 @@ function parseFullSections(markdown) {
         for (const sub of subs) {
             const subMatch = sub.match(/^### (.+)/);
             if (!subMatch) continue;
-            let subTitle = subMatch[1].replace(/^\d+\.\s*/, '').trim();
+            let subTitle = cleanCardText(subMatch[1].replace(/^\d+\.\s*/, '').trim());
 
             // 提取核心判断段落作为摘要
             const body = sub.replace(/^### .*/m, '').trim();
@@ -106,14 +107,22 @@ function parseFullSections(markdown) {
                              body.match(/\*\*核心判断[：:]\*\*\s*(.+?)\*\*/s) ||
                              body.match(/\*\*核心判断\*\*[：:]\s*(.+)/);
             if (coreLine) {
-                summary = coreLine[1].replace(/\*\*/g, '').trim();
+                summary = cleanCardText(coreLine[1]);
+            }
+
+            // 产品类条目常直接用首段加粗表达核心判断，而不写“核心判断”。
+            if (!summary) {
+                const firstBold = body.match(/^\s*\*\*(.+?)\*\*/s);
+                if (firstBold) {
+                    summary = cleanCardText(firstBold[1]);
+                }
             }
 
             // 如果没找到核心判断，取第一段非空文本
             if (!summary) {
                 const firstPara = body.split('\n\n').find(p => p.trim() && !p.trim().startsWith('-') && !p.trim().startsWith('>') && !p.trim().startsWith('**'));
                 if (firstPara) {
-                    summary = firstPara.replace(/\*\*/g, '').replace(/[\-\*]\s*/g, '').trim();
+                    summary = cleanCardText(firstPara.replace(/[\-\*]\s*/g, ''));
                 }
             }
 
@@ -123,7 +132,7 @@ function parseFullSections(markdown) {
             } else if (summary.length < 40) {
                 const evidences = body.match(/^-\s+(.+)/gm) || [];
                 for (const ev of evidences) {
-                    const evText = ev.replace(/^-\s+/, '').replace(/\[.*?\]\(.*?\)/g, '').replace(/\*\*/g, '').trim();
+                    const evText = cleanCardText(ev.replace(/^-\s+/, ''));
                     if (evText.length > 15 && !summary.includes(evText.substring(0, 15))) {
                         summary = summary ? summary + '；' + evText : evText;
                         break;
@@ -140,7 +149,7 @@ function parseFullSections(markdown) {
             if (!summary) {
                 const evidence = body.match(/-\s*(.+)/);
                 if (evidence) {
-                    summary = evidence[1].replace(/\[.*?\]\(.*?\)/g, '').replace(/\*\*/g, '').trim();
+                    summary = cleanCardText(evidence[1]);
                     if (summary.length > 120) summary = summary.substring(0, 117) + '...';
                 }
             }
@@ -154,7 +163,7 @@ function parseFullSections(markdown) {
         if (existing.items.length < 2) {
             const evidenceLines = sec.match(/^-\s+(.+)/gm) || [];
             for (const el of evidenceLines) {
-                const text = el.replace(/^-\s+/, '').replace(/\[.*?\]\(.*?\)/g, '').replace(/\*\*/g, '').trim();
+                const text = cleanCardText(el.replace(/^-\s+/, ''));
                 if (text.length > 15 && text.length < 150 && existing.items.length < 4) {
                     // 避免重复
                     if (!existing.items.some(it => it.summary.includes(text.substring(0, 20)))) {
@@ -189,6 +198,7 @@ function paginateSection(section, maxItemsPerPage = 3) {
  * 生成封面 HTML
  */
 function coverHtml(date, sectionCount, totalItems) {
+    const dateLabel = date.substring(5).replace('-', '.');
     return `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
@@ -197,35 +207,38 @@ body {
   width:${CARD_WIDTH}px; height:${CARD_HEIGHT}px;
   font-family:${FONT_STACK};
   overflow:hidden;
-  background: linear-gradient(165deg, #0f0c29 0%, #1a1a2e 40%, #16213e 100%);
-  color:#fff;
+  background:#f7f3ea;
+  color:#101828;
   position:relative;
 }
-.deco1 { position:absolute; top:-120px; right:-80px; width:320px; height:320px; border-radius:50%; background:radial-gradient(circle,rgba(233,69,96,.15) 0%,transparent 70%); }
-.deco2 { position:absolute; bottom:-60px; left:-100px; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle,rgba(88,166,255,.1) 0%,transparent 70%); }
-.top-bar { position:absolute; top:0; left:0; right:0; height:6px; background:linear-gradient(90deg,#e94560,#ff6b6b,#e94560); }
-.content { position:relative; z-index:1; padding:80px 72px; }
-.badge { display:inline-block; background:rgba(233,69,96,.15); border:1px solid rgba(233,69,96,.3); border-radius:20px; padding:6px 18px; font-size:22px; color:#e94560; letter-spacing:2px; margin-bottom:24px; }
-.title { font-size:88px; font-weight:900; letter-spacing:6px; background:linear-gradient(135deg,#e94560 0%,#ff6b6b 50%,#e94560 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.15; margin-bottom:16px; }
-.date { font-size:44px; color:rgba(255,255,255,.5); letter-spacing:4px; font-weight:400; margin-bottom:48px; }
-.divider { width:100%; height:2px; background:linear-gradient(90deg,#e94560,transparent); margin-bottom:48px; }
-.sections-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 40px; }
-.section-item { display:flex; align-items:center; gap:12px; font-size:30px; color:rgba(255,255,255,.85); }
-.section-emoji { font-size:32px; }
-.footer { position:absolute; bottom:60px; left:72px; right:72px; }
-.footer-divider { width:100%; height:1px; background:linear-gradient(90deg,rgba(255,255,255,.1),rgba(255,255,255,.05)); margin-bottom:20px; }
-.stats { font-size:22px; color:rgba(255,255,255,.35); margin-bottom:8px; }
-.credit { font-size:20px; color:rgba(255,255,255,.25); }
+.grain { position:absolute; inset:0; background-image:linear-gradient(rgba(16,24,40,.035) 1px, transparent 1px),linear-gradient(90deg,rgba(16,24,40,.035) 1px, transparent 1px); background-size:36px 36px; }
+.top-bar { position:absolute; top:0; left:0; right:0; height:14px; background:#ff4d3d; }
+.content { position:relative; z-index:1; padding:88px 72px; height:100%; }
+.badge { display:inline-block; background:#101828; color:#fff; border-radius:999px; padding:10px 22px; font-size:24px; font-weight:800; letter-spacing:1px; margin-bottom:34px; }
+.title { font-size:120px; font-weight:1000; letter-spacing:0; line-height:.95; color:#101828; margin-bottom:18px; }
+.title-accent { color:#ff4d3d; }
+.date { font-size:44px; color:#475467; letter-spacing:2px; font-weight:800; margin-bottom:56px; }
+.hero-card { background:#fff; border:4px solid #101828; border-radius:8px; padding:34px 36px; box-shadow:12px 12px 0 #101828; margin-bottom:50px; }
+.hero-title { font-size:42px; line-height:1.25; font-weight:1000; margin-bottom:16px; }
+.hero-copy { font-size:27px; color:#475467; line-height:1.55; font-weight:600; }
+.sections-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 22px; }
+.section-item { display:flex; align-items:center; gap:12px; background:#fff; border:2px solid #101828; border-radius:8px; padding:14px 16px; font-size:27px; font-weight:850; color:#101828; }
+.section-emoji { font-size:31px; }
+.footer { position:absolute; bottom:58px; left:72px; right:72px; display:flex; justify-content:space-between; align-items:flex-end; border-top:3px solid #101828; padding-top:22px; }
+.stats { font-size:24px; color:#101828; font-weight:850; }
+.credit { font-size:18px; color:#667085; text-align:right; }
 </style>
 </head><body>
-<div class="deco1"></div>
-<div class="deco2"></div>
+<div class="grain"></div>
 <div class="top-bar"></div>
 <div class="content">
-  <div class="badge">DAILY REPORT</div>
-  <div class="title">AI 日报</div>
+  <div class="badge">AI DAILY · ${dateLabel}</div>
+  <div class="title">AI<span class="title-accent">日报</span></div>
   <div class="date">${date}</div>
-  <div class="divider"></div>
+  <div class="hero-card">
+    <div class="hero-title">今天 AI 圈最值得看的信号</div>
+    <div class="hero-copy">${totalItems} 条精华，拆成 ${sectionCount} 个维度。适合收藏、复盘、找选题。</div>
+  </div>
   <div class="sections-grid">
     <div class="section-item"><span class="section-emoji">🚀</span> 产品与功能更新</div>
     <div class="section-item"><span class="section-emoji">🔬</span> 前沿研究</div>
@@ -237,9 +250,8 @@ body {
   </div>
 </div>
 <div class="footer">
-  <div class="footer-divider"></div>
-  <div class="stats">${totalItems} 条精华 · ${sectionCount} 维度深度分析</div>
-  <div class="credit">ilovetochangetheworld.github.io/ai-daily-report</div>
+  <div class="stats">${totalItems} 条精华 · ${sectionCount} 维度</div>
+  <div class="credit">${BRAND_URL}</div>
 </div>
 </body></html>`;
 }
@@ -267,75 +279,72 @@ body {
   width:${CARD_WIDTH}px; height:${CARD_HEIGHT}px;
   font-family:${FONT_STACK};
   overflow:hidden;
-  background: linear-gradient(165deg, #0f0c29 0%, #1a1a2e 40%, #16213e 100%);
-  color:#fff;
+  background:#f7f3ea;
+  color:#101828;
   position:relative;
 }
-.deco-circle {
-  position:absolute; top:-100px; right:-120px;
-  width:300px; height:300px; border-radius:50%;
-  background: radial-gradient(circle, rgba(233,69,96,0.08) 0%, transparent 70%);
-}
+.paper-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(16,24,40,.035) 1px, transparent 1px),linear-gradient(90deg,rgba(16,24,40,.035) 1px, transparent 1px); background-size:36px 36px; }
 .top-bar {
-  position:absolute; top:0; left:0; right:0; height:6px;
-  background: linear-gradient(90deg, #e94560, #ff6b6b, #e94560);
+  position:absolute; top:0; left:0; right:0; height:14px;
+  background:#ff4d3d;
 }
 .content {
   position:relative; z-index:1;
-  padding:56px 60px;
+  padding:64px 60px;
 }
-.section-header { margin-bottom:32px; }
-.section-emoji { font-size:48px; margin-bottom:10px; display:block; }
-.section-title {
-  font-size:44px; font-weight:900;
-  color:#e94560;
-  letter-spacing:2px;
-}
+.section-header { margin-bottom:30px; }
+.eyebrow { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; }
+.section-emoji { font-size:52px; display:block; }
 .section-meta {
-  font-size:16px; color:rgba(255,255,255,.2);
-  margin-top:6px;
+  font-size:19px; color:#101828; background:#fff;
+  border:2px solid #101828; border-radius:999px; padding:8px 16px;
+  font-weight:850;
+}
+.section-title {
+  font-size:52px; font-weight:1000; line-height:1.12;
+  color:#101828; letter-spacing:0;
 }
 .header-line {
-  width:80px; height:4px; border-radius:2px;
-  background: linear-gradient(90deg, #e94560, #ff6b6b);
-  margin-top:14px;
+  width:130px; height:8px; border-radius:999px;
+  background:#ff4d3d; margin-top:18px;
 }
-.cards { display:flex; flex-direction:column; gap:16px; }
+.cards { display:flex; flex-direction:column; gap:18px; }
 .card {
-  background: rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.06);
-  border-radius:14px;
-  padding:22px 26px;
+  background:#fff; border:3px solid #101828;
+  border-radius:8px; padding:24px 26px;
+  box-shadow:8px 8px 0 rgba(16,24,40,.12);
 }
 .card-header {
   display:flex; align-items:center; gap:10px;
-  margin-bottom:10px;
+  margin-bottom:12px;
 }
 .card-bullet {
-  width:7px; height:7px; border-radius:50%;
-  background:#58a6ff; flex-shrink:0;
+  width:24px; height:24px; border-radius:50%;
+  background:#ff4d3d; border:3px solid #101828; flex-shrink:0;
 }
-.card-subtitle { font-size:24px; font-weight:700; color:#58a6ff; }
+.card-subtitle { font-size:28px; line-height:1.25; font-weight:950; color:#101828; }
 .card-body {
-  font-size:21px; line-height:1.65;
-  color:rgba(255,255,255,.65);
-  padding-left:17px;
+  font-size:23px; line-height:1.62;
+  color:#475467; padding-left:34px; font-weight:600;
 }
 .footer {
-  position:absolute; bottom:36px; left:60px; right:60px;
+  position:absolute; bottom:40px; left:60px; right:60px;
   display:flex; justify-content:space-between; align-items:center;
+  border-top:3px solid #101828; padding-top:18px;
 }
-.footer-left { font-size:18px; color:rgba(255,255,255,.22); }
-.footer-right { font-size:15px; color:rgba(255,255,255,.13); }
+.footer-left { font-size:21px; color:#101828; font-weight:850; }
+.footer-right { font-size:16px; color:#667085; }
 </style>
 </head><body>
-<div class="deco-circle"></div>
+<div class="paper-grid"></div>
 <div class="top-bar"></div>
 <div class="content">
   <div class="section-header">
-    <span class="section-emoji">${page.emoji || '📌'}</span>
+    <div class="eyebrow">
+      <span class="section-emoji">${page.emoji || '📌'}</span>
+      <div class="section-meta">SECTION ${globalIndex}</div>
+    </div>
     <div class="section-title">${escHtml(page.title)}${pageLabel}</div>
-    <div class="section-meta">SECTION ${globalIndex}</div>
     <div class="header-line"></div>
   </div>
   <div class="cards">
@@ -344,7 +353,7 @@ body {
 </div>
 <div class="footer">
   <span class="footer-left">AI日报 · ${date}</span>
-  <span class="footer-right">ilovetochangetheworld.github.io/ai-daily-report</span>
+  <span class="footer-right">${BRAND_URL}</span>
 </div>
 </body></html>`;
 }
@@ -399,8 +408,11 @@ async function generateCoverAndCards(date, sectionsOrMarkdown, outputDir) {
         puppeteer = require('puppeteer');
     }
 
+    const executablePath = resolveChromeExecutable(puppeteer);
     const browser = await puppeteer.launch({
         headless: true,
+        executablePath,
+        dumpio: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
     });
 
@@ -449,6 +461,34 @@ function getDefaultSections() {
 
 function escHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function cleanCardText(str) {
+    return String(str || '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\*\*/g, '')
+        .replace(/`/g, '')
+        .replace(/^(分析思路与推演链条|分析推演链条|分析思路|推演链条)[：:]\s*/i, '')
+        .replace(/^(核心判断|实战建议|反向视角)[：:]\s*/i, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function resolveChromeExecutable(puppeteer) {
+    const candidates = [
+        process.env.PUPPETEER_EXECUTABLE_PATH,
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        '/Applications/Chromium.app/Contents/MacOS/Chromium',
+        '/usr/bin/google-chrome',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/chromium',
+    ].filter(Boolean);
+
+    for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) return candidate;
+    }
+
+    return typeof puppeteer.executablePath === 'function' ? puppeteer.executablePath() : undefined;
 }
 
 module.exports = { generateCoverAndCards, parseFullSections, paginateSection, coverHtml, sectionCardHtml };

@@ -55,23 +55,42 @@ function saveReport(markdown, lang, date) {
  */
 const MARKDOWN_STYLES = `
         .markdown-body {
-            background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 32px;
+            background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 34px;
+            box-shadow: 0 18px 48px rgba(0,0,0,.22);
         }
-        .markdown-body h1 { color: #e6edf3; font-size: 1.8em; margin: 0 0 16px 0; border-bottom: 1px solid #21262d; padding-bottom: 12px; }
-        .markdown-body h2 { color: #e6edf3; font-size: 1.35em; margin: 28px 0 12px 0; border-bottom: 1px solid #21262d; padding-bottom: 8px; }
-        .markdown-body h3 { color: #e6edf3; font-size: 1.1em; margin: 20px 0 8px 0; }
+        .markdown-body h1 {
+            color: #f0f6fc; font-size: 2em; line-height: 1.25;
+            margin: 0 0 18px 0; border-bottom: 1px solid #21262d; padding-bottom: 14px;
+        }
+        .markdown-body h2 {
+            color: #f0f6fc; font-size: 1.45em; line-height: 1.35;
+            margin: 34px 0 14px 0; padding: 10px 14px;
+            border: 1px solid #30363d; border-left: 4px solid #58a6ff;
+            border-radius: 8px; background: linear-gradient(90deg,#1f6feb22,transparent);
+        }
+        .markdown-body h3 {
+            color: #e6edf3; font-size: 1.13em; line-height: 1.45;
+            margin: 24px 0 10px 0; padding-left: 12px;
+            border-left: 3px solid #f78166;
+        }
         .markdown-body h4 { color: #e6edf3; font-size: 1em; margin: 16px 0 6px 0; }
-        .markdown-body p { margin: 10px 0; }
+        .markdown-body p { margin: 11px 0; }
         .markdown-body blockquote {
-            border-left: 3px solid #1f6feb;
-            padding: 10px 16px; margin: 16px 0; color: #8b949e;
+            border-left: 4px solid #1f6feb;
+            padding: 12px 16px; margin: 18px 0; color: #c9d1d9;
             background: #0d1117; border-radius: 0 8px 8px 0;
         }
-        .markdown-body strong { color: #e6edf3; }
+        .markdown-body p > strong:first-child {
+            display: block; color: #f0f6fc; background: #0d1117;
+            border: 1px solid #30363d; border-radius: 8px;
+            padding: 12px 14px; margin: 12px 0;
+        }
+        .markdown-body li strong,
+        .markdown-body p strong { color: #f0f6fc; }
         .markdown-body em { color: #8b949e; }
         .markdown-body hr { border: none; border-top: 1px solid #21262d; margin: 24px 0; }
         .markdown-body ul, .markdown-body ol { padding-left: 24px; margin: 10px 0; }
-        .markdown-body li { margin: 6px 0; }
+        .markdown-body li { margin: 8px 0; }
         .markdown-body a { color: #58a6ff; text-decoration: none; }
         .markdown-body a:hover { text-decoration: underline; }
         .markdown-body code { background: #1c2128; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: #f78166; }
@@ -81,7 +100,13 @@ const MARKDOWN_STYLES = `
         .markdown-body video { max-width: 100%; border-radius: 8px; margin: 12px 0; }
         .markdown-body table { width: 100%; border-collapse: collapse; margin: 12px 0; }
         .markdown-body th, .markdown-body td { border: 1px solid #30363d; padding: 8px 12px; text-align: left; }
-        .markdown-body th { background: #21262d; color: #e6edf3; }`;
+        .markdown-body th { background: #21262d; color: #e6edf3; }
+        @media (max-width: 640px) {
+            .markdown-body { padding: 22px 18px; border-radius: 10px; }
+            .markdown-body h1 { font-size: 1.55em; }
+            .markdown-body h2 { font-size: 1.22em; padding: 9px 12px; }
+            .markdown-body h3 { font-size: 1.04em; }
+        }`;
 
 /**
  * 将 Markdown 渲染为完整的 HTML 页面
@@ -99,9 +124,10 @@ function renderMarkdownToFullHtml(markdown, lang, date) {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
-            background: #0d1117; color: #c9d1d9; line-height: 1.7;
+            background: radial-gradient(circle at top left,#132238 0,#0d1117 34%,#0d1117 100%);
+            color: #c9d1d9; line-height: 1.72;
         }
-        .container { max-width: 860px; margin: 0 auto; padding: 40px 20px; }
+        .container { max-width: 920px; margin: 0 auto; padding: 42px 20px; }
         .back { display: inline-block; margin-bottom: 24px; color: #58a6ff; text-decoration: none; font-size: 0.95em; }
         .back:hover { text-decoration: underline; }
         ${MARKDOWN_STYLES}
@@ -217,7 +243,7 @@ function generateIndex() {
     <title>🤖 AI 日报 — 每日 AI 行业洞察</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.7; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif; background: radial-gradient(circle at top left,#132238 0,#0d1117 34%,#0d1117 100%); color: #c9d1d9; line-height: 1.72; }
 
         /* 顶部导航 */
         .top-bar {

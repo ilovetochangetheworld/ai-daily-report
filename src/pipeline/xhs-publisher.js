@@ -6,10 +6,7 @@
  */
 
 const { execSync } = require('child_process');
-const fs = require('fs');
-const os = require('os');
 const path = require('path');
-const { callLLM } = require('./llm');
 const { generateCoverAndCards, parseFullSections } = require('./xhs-cards');
 
 // 板块 emoji 对照表
@@ -37,6 +34,11 @@ function generateXhsContent(fullMarkdown, date) {
     for (const sec of sections) {
         for (const item of sec.items) {
             if (item.subtitle.length > 8 && !headline) {
+                const quoted = item.subtitle.match(/“([^”]{4,12})”/);
+                if (quoted) {
+                    headline = quoted[1];
+                    break;
+                }
                 // 如果有冒号，取冒号前的短标题
                 const colonIdx = item.subtitle.indexOf('：');
                 if (colonIdx > 2 && colonIdx < 14) {
@@ -55,55 +57,32 @@ function generateXhsContent(fullMarkdown, date) {
         : `⚡️AI日报${dateStr}`;
 
     let content = title + '\n\n';
+    content += '今天的 AI 信号我整理成卡片了，适合先看图速览，再回到正文抓重点。\n\n';
     content += '━━━━━━━━━━━━━━━━\n\n';
+    content += '🔥 今日最值得关注\n\n';
 
+    const highlights = [];
     for (const sec of sections) {
         const emoji = SECTION_EMOJIS[sec.title] || sec.emoji || '📌';
-
-        for (const item of sec.items) {
-            // 精简摘要：去掉链接、去掉「关键证据」前缀、取核心一句
-            let brief = item.summary
-                .replace(/\[.*?\]\(.*?\)/g, '')   // 去 markdown 链接
-                .replace(/[（(]\s*[）)]/g, '')     // 去空括号
-                .replace(/\*\*/g, '')              // 去加粗
-                .replace(/`/g, '')                 // 去行内代码
-                .replace(/^关键证据[：:]\s*/i, '')  // 去前缀
-                .replace(/\s+/g, ' ')
-                .trim();
-
-            // 分号分隔多条证据时，只取第一句
-            if (brief.includes('；')) {
-                brief = brief.split('；')[0];
-            }
-            if (brief.includes('。') && brief.indexOf('。') < brief.length - 1) {
-                const firstSentence = brief.substring(0, brief.indexOf('。') + 1);
-                if (firstSentence.length > 15) brief = firstSentence;
-            }
-
-            // 截断到 55 字
-            if (brief.length > 55) {
-                const cut = brief.substring(0, 55);
-                const lastPunc = Math.max(cut.lastIndexOf('，'), cut.lastIndexOf('、'));
-                brief = lastPunc > 12 ? brief.substring(0, lastPunc) + '…' : cut + '…';
-            }
-
-            // 去掉末尾残余标点
-            brief = brief.replace(/[，；、\s]+$/, '');
-
-            content += `${emoji} 【${item.subtitle}】\n${brief}\n\n`;
+        for (const item of sec.items.slice(0, 2)) {
+            highlights.push({ emoji, item });
+            if (highlights.length >= 8) break;
         }
+        if (highlights.length >= 8) break;
+    }
 
-        // 板块间双空行
-        content += '\n';
+    for (const { emoji, item } of highlights) {
+        content += `${emoji} ${compactTitle(item.subtitle, 24)}\n${compactBrief(item.summary, 54)}\n\n`;
     }
 
     content += '━━━━━━━━━━━━━━━━\n\n';
+    content += '📌 卡片覆盖完整板块：产品、研究、行业、开源、社媒、Coding、机会。\n';
     content += '🔗 完整日报：ilovetochangetheworld.github.io/ai-daily-report\n';
 
     // 统计数据
     const totalItems = sections.reduce((sum, s) => sum + s.items.length, 0);
-    content += `📊 今日数据：${totalItems}条精华 · ${sections.length}维度深度分析\n\n`;
-    content += '#AI日报 #大模型 #AI行业趋势 #开源AI #AIAgent';
+    content += `📊 今日数据：${totalItems} 条精华 · ${sections.length} 个维度\n\n`;
+    content += '#AI日报 #大模型 #AIAgent #AI工具 #科技趋势 #AI创业';
 
     return content;
 }
@@ -168,6 +147,42 @@ async function publishToXhs({ date, fullMarkdown, signals }) {
 function extractTitle(content) {
     const firstLine = content.split('\n')[0]?.trim() || 'AI日报';
     return firstLine.substring(0, 20);
+}
+
+function compactTitle(title, maxLen) {
+    const cleaned = String(title || '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\*\*/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    return cleaned.length > maxLen ? cleaned.substring(0, maxLen - 1) + '…' : cleaned;
+}
+
+function compactBrief(summary, maxLen) {
+    let brief = String(summary || '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/[（(]\s*[）)]/g, '')
+        .replace(/\*\*/g, '')
+        .replace(/`/g, '')
+        .replace(/^(分析思路与推演链条|分析推演链条|分析思路|推演链条)[：:]\s*/i, '')
+        .replace(/^关键证据[：:]\s*/i, '')
+        .replace(/^核心判断[：:]\s*/i, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (brief.includes('；')) {
+        brief = brief.split('；')[0];
+    }
+    if (brief.includes('。') && brief.indexOf('。') < brief.length - 1) {
+        const firstSentence = brief.substring(0, brief.indexOf('。') + 1);
+        if (firstSentence.length > 15) brief = firstSentence;
+    }
+    if (brief.length > maxLen) {
+        const cut = brief.substring(0, maxLen);
+        const lastPunc = Math.max(cut.lastIndexOf('，'), cut.lastIndexOf('、'));
+        brief = lastPunc > 12 ? brief.substring(0, lastPunc) + '…' : cut + '…';
+    }
+    return brief.replace(/[，；、\s]+$/, '');
 }
 
 module.exports = { publishToXhs, generateXhsContent };
