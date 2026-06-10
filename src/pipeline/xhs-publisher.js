@@ -125,13 +125,14 @@ async function publishToXhs({ date, fullMarkdown, signals }) {
         const parsedSections = parseFullSections(fullMarkdown);
         const topic = parsedSections[0]?.title || 'AI日报';
         const result = execSync(
-            `xhs post --title ${JSON.stringify(title)} --body ${JSON.stringify(xhsContent)} ${imgArgs} --topic ${JSON.stringify(topic)} --json`,
+            `xhs post --title ${JSON.stringify(title)} --body ${JSON.stringify(xhsContent)} ${imgArgs} --topic ${JSON.stringify(topic)} --private --json`,
             { encoding: 'utf8', timeout: 120000 }
         );
 
         const parsed = JSON.parse(result);
         if (parsed.ok) {
-            console.log(`  ✓ 小红书发布成功！笔记ID: ${parsed.data?.id}`);
+            console.log(`  ✓ 小红书发布成功（仅自己可见）！笔记ID: ${parsed.data?.id}`);
+            console.log(`  💡 请在小红书App中审查后手动公开`);
             return parsed.data;
         } else {
             console.log(`  ✗ 小红书发布失败:`, JSON.stringify(parsed));
