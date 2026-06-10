@@ -41,7 +41,9 @@ jobs:
           npx puppeteer browsers install chrome
 
       - name: 🍪 注入小红书 Cookie
-        if: ${{ secrets.XHS_A1 }}
+        if: ${{ env.XHS_A1 != '' }}
+        env:
+          XHS_A1: ${{ secrets.XHS_A1 }}
         run: |
           mkdir -p ~/.xiaohongshu-cli
           cat > ~/.xiaohongshu-cli/cookies.json << EOF
@@ -54,7 +56,9 @@ jobs:
           echo "✓ 小红书 Cookie 已注入"
 
       - name: 🍪 注入 Twitter Cookie
-        if: ${{ secrets.TWITTER_AUTH_TOKEN }}
+        if: ${{ env.TWITTER_AUTH_TOKEN != '' }}
+        env:
+          TWITTER_AUTH_TOKEN: ${{ secrets.TWITTER_AUTH_TOKEN }}
         run: |
           mkdir -p ~/.twitter-cli
           cat > ~/.twitter-cli/cookies.json << EOF
