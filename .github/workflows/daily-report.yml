@@ -50,7 +50,7 @@ jobs:
           {
             "a1": "${{ secrets.XHS_A1 }}",
             "web_session": "${{ secrets.XHS_WEB_SESSION }}",
-            "saved_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            "saved_at": $(python3 -c "import time; print(time.time())")
           }
           EOF
           echo "✓ 小红书 Cookie 已注入"
@@ -65,7 +65,7 @@ jobs:
           {
             "auth_token": "${{ secrets.TWITTER_AUTH_TOKEN }}",
             "ct0": "${{ secrets.TWITTER_CT0 }}",
-            "saved_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            "saved_at": $(python3 -c "import time; print(time.time())")
           }
           EOF
           echo "✓ Twitter Cookie 已注入"
