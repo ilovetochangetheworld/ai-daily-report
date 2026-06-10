@@ -1,14 +1,14 @@
 /**
- * AI Coding 动态抓取器
- * 聚合 AI 编程工具相关动态（Cursor, Copilot, Claude Code, Codex 等）
- * 数据源：GitHub releases, Hacker News AI coding 标签
+ * Harness Engineering 动态抓取器
+ * 聚合 Agent harness、CLI/IDE Agent、工具调用与工程化动态
+ * 数据源：GitHub releases, Hacker News harness/agent engineering 相关讨论
  */
 
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { BaseFetcher } = require('./base');
 
-// 需要关注的 AI Coding 仓库
+// 需要关注的 Harness Engineering 仓库
 const WATCHED_REPOS = [
     { owner: 'anthropics', repo: 'claude-code', name: 'Claude Code' },
     { owner: 'openai', repo: 'codex', name: 'OpenAI Codex CLI' },
@@ -24,7 +24,7 @@ const WATCHED_REPOS = [
 
 class AICodingFetcher extends BaseFetcher {
     constructor() {
-        super('ai-coding', 'AI Coding');
+        super('ai-coding', 'Harness Engineering');
     }
 
     async fetch() {
@@ -68,12 +68,12 @@ class AICodingFetcher extends BaseFetcher {
 
         await Promise.allSettled(releasePromises);
 
-        // 2. 抓取 HN 上 AI coding 相关讨论
+        // 2. 抓取 HN 上 Harness Engineering 相关讨论
         try {
             const hnResp = await axios.get('https://hn.algolia.com/api/v1/search', {
                 timeout: 10000,
                 params: {
-                    query: 'AI coding OR Cursor OR Copilot OR "Claude Code" OR Codex',
+                    query: '("agent harness" OR "AI coding" OR Cursor OR Copilot OR "Claude Code" OR Codex OR "tool use" OR sandbox)',
                     tags: 'story',
                     hitsPerPage: 15,
                     numericFilters: 'points>10',
@@ -98,7 +98,7 @@ class AICodingFetcher extends BaseFetcher {
                 });
             }
         } catch (error) {
-            console.error(`  [AI Coding] HN 搜索失败: ${error.message}`);
+            console.error(`  [Harness Engineering] HN 搜索失败: ${error.message}`);
         }
 
         return signals;

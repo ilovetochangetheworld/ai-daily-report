@@ -2,7 +2,7 @@
  * 统一导出所有抓取器
  * 
  * 数据源分层策略（参考 Agent-Reach）:
- * - Tier 0: 零配置公开 API → HackerNews, GitHub Trending, V2EX, HuggingFace, AI Coding, arXiv
+ * - Tier 0: 零配置公开 API → HackerNews, GitHub Trending, V2EX, HuggingFace, Harness Engineering, arXiv
  * - Tier 0+: 零配置互联网服务 → Jina Reader, Google News RSS, RSS Feeds
  * - Tier 1: 需要 Cookie/CLI → Twitter/X, Reddit, 小红书, Product Hunt
  */

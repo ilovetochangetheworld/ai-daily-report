@@ -64,7 +64,7 @@ async function classifySignalsByLLM(signals) {
 3. industry - 行业展望与社会影响（融资、IPO、政策法规、伦理争议、就业影响）
 4. opensource - 开源 TOP 项目（GitHub 新晋热门项目、重大版本发布、社区动态）
 5. social - 社媒热议（Twitter/X、Reddit、V2EX、小红书上的热议话题、大V言论）
-6. coding - AI Coding & 工程（AI 编程工具动态、代码生成模型、Coding Agent、IDE 集成）
+6. coding - Harness Engineering（Agent harness、工具调用、沙箱、评测、IDE/CLI 工作流与工程化）
 7. discovery - 发现机会（新应用场景、市场空白、创业方向、商业模式）
 
 ⚠️ 必须将所有7个分类都输出，即使某个分类为空数组。
@@ -115,7 +115,7 @@ async function classifySignalsByRules(signals) {
             sources: ['Twitter/X', 'Reddit'],
         },
         coding: {
-            keywords: ['cursor', 'copilot', 'claude code', 'codex', 'coding agent', 'code generation', 'ide', 'vscode', '编程', '代码生成', 'devin', 'windsurf', 'augment', 'cline', 'aider', 'sweep', 'harness', '脚手架', 'scaffold', 'ai coding', 'aide'],
+            keywords: ['cursor', 'copilot', 'claude code', 'codex', 'coding agent', 'code generation', 'ide', 'vscode', '编程', '代码生成', 'devin', 'windsurf', 'augment', 'cline', 'aider', 'sweep', 'harness', 'agent harness', 'engineering', 'workflow', 'tool use', '工具调用', '沙箱', '评测', '脚手架', 'scaffold', 'ai coding', 'aide'],
             sources: ['ai-coding', 'V2EX'],
         },
         product: {
@@ -195,9 +195,9 @@ function generateDimensions(classified) {
             systemHint: '聚焦：大V言论、社区热议、观点碰撞。'
         },
         {
-            id: 'coding', name: 'AI Coding & 工程', nameEn: 'AI Coding & Engineering',
+            id: 'coding', name: 'Harness Engineering', nameEn: 'Harness Engineering',
             icon: '💻',
-            systemHint: '聚焦：AI编程工具更新（Cursor/Copilot/Claude Code/Codex等）、代码生成模型、Coding Agent、IDE集成、开发者工作流变革。'
+            systemHint: '聚焦：Agent harness、工具调用协议、沙箱与权限、评测与回放、CLI/IDE Agent 工作流、开发者工程化实践。'
         },
         {
             id: 'discovery', name: '发现机会', nameEn: 'Opportunity Discovery',
@@ -369,7 +369,7 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
 ## 🌍 行业展望与社会影响
 ## ⭐ 开源 TOP 项目
 ## 💬 社媒热议
-## 💻 AI Coding & 工程
+## 💻 Harness Engineering
 ## 💡 发现机会
 
 ---

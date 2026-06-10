@@ -18,7 +18,7 @@ const SEARCH_QUERIES = [
     { q: 'AI breakthroughs new model releases', lang: 'en' },
     { q: 'AI startup funding acquisitions', lang: 'en' },
     { q: 'open source AI projects trending', lang: 'en' },
-    { q: 'AI coding tools agents updates', lang: 'en' },
+    { q: 'agent harness engineering AI coding tools updates', lang: 'en' },
     { q: '大模型 AI发布 融资', lang: 'zh' },
 ];
 

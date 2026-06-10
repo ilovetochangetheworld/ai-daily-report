@@ -13,7 +13,7 @@
 | 🌍 行业展望与社会影响 | 融资/并购/IPO、政策法规、伦理争议、就业影响 |
 | ⭐ 开源 TOP 项目 | GitHub 热门项目、重大版本发布、社区动态 |
 | 💬 社媒分享 | 大V言论、社区热议、值得关注的长文 |
-| 💻 AI Coding | AI 编程工具动态、代码生成模型、Coding Agent |
+| 💻 Harness Engineering | Agent harness、工具调用、沙箱、评测、IDE/CLI 工作流 |
 | 💡 发现机会 | 新应用场景、市场空白、创业方向 |
 
 ## 数据源
@@ -21,7 +21,7 @@
 | 来源 | 类型 | 栏目覆盖 |
 |------|------|---------|
 | Hacker News | 社区讨论 | 全部 |
-| GitHub Trending | 开源项目 | 开源TOP、AI Coding |
+| GitHub Trending | 开源项目 | 开源TOP、Harness Engineering |
 | Product Hunt | 产品发布 | 产品更新、发现机会 |
 | Reddit (r/LocalLLaMA, r/MachineLearning) | 社区讨论 | 前沿研究、社媒分享 |
 | Hugging Face | 模型/数据集 | 前沿研究、开源TOP |
@@ -29,7 +29,7 @@
 | Google Trends | 搜索趋势 | 行业展望、趋势判断 |
 | 机器之心 | 中文AI资讯 | 产品更新、前沿研究 |
 | 新智元 | 中文AI资讯 | 行业展望、社媒分享 |
-| GitHub Releases | 版本发布 | AI Coding、开源TOP |
+| GitHub Releases | 版本发布 | Harness Engineering、开源TOP |
 
 ## 在线访问
 
