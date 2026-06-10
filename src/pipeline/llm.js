@@ -11,12 +11,12 @@ const DEFAULT_BASE_URL = 'https://api.lkeap.cloud.tencent.com/plan/v3';
 const MODEL_CONFIGS = {
     'glm-5.1': {
         type: 'reasoning',       // 推理模型，有 reasoning_content
-        maxTokens: 16000,        // 推理模型需要大量空间给思考链
+        maxTokens: 32768,        // 推理模型需要大量空间给思考链
         temperature: 0.7,
     },
     'minimax-m2.7': {
         type: 'reasoning',
-        maxTokens: 16000,
+        maxTokens: 32768,
         temperature: 0.7,
     },
     // 未来可加更多模型
@@ -30,7 +30,7 @@ function resolveModel(model) {
 }
 
 function getModelConfig(model) {
-    return MODEL_CONFIGS[model] || { type: 'normal', maxTokens: 16000, temperature: 0.7 };
+    return MODEL_CONFIGS[model] || { type: 'normal', maxTokens: 32768, temperature: 0.7 };
 }
 
 function createClient() {

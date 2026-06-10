@@ -5,7 +5,7 @@
  * - 通过 xhs-cli 发布
  */
 
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const path = require('path');
 const { generateCoverAndCards, parseFullSections } = require('./xhs-cards');
 
@@ -121,15 +121,36 @@ async function publishToXhs({ date, fullMarkdown, signals }) {
     console.log(`  → 发布到小红书: ${title}`);
 
     try {
-        const imgArgs = imagePaths.map(p => `--images ${JSON.stringify(p)}`).join(' ');
         const parsedSections = parseFullSections(fullMarkdown);
         const topic = parsedSections[0]?.title || 'AI日报';
-        const result = execSync(
-            `xhs post --title ${JSON.stringify(title)} --body ${JSON.stringify(xhsContent)} ${imgArgs} --topic ${JSON.stringify(topic)} --private --json`,
-            { encoding: 'utf8', timeout: 120000 }
-        );
 
-        const parsed = JSON.parse(result);
+        // 使用 spawnSync 直接传参数数组，避免 execSync 通过 shell 时 \n 换行符被吞掉
+        const args = ['post', '--title', title, '--body', xhsContent];
+        for (const p of imagePaths) args.push('--images', p);
+        args.push('--topic', topic, '--private', '--json');
+
+        const result = spawnSync('xhs', args, { encoding: 'utf8', timeout: 120000 });
+        const stdout = (result.stdout || '').trim();
+        const stderr = (result.stderr || '').trim();
+
+        if (!stdout && result.status !== 0) {
+            console.error('  ✗ 小红书发布异常 (exit', result.status, '):', stderr.substring(0, 300));
+            return null;
+        }
+
+        let parsed;
+        try { parsed = JSON.parse(stdout); } catch {
+            // xhs-cli 可能先输出进度行，找最后一个 JSON
+            const lines = stdout.split('\n');
+            for (let i = lines.length - 1; i >= 0; i--) {
+                try { parsed = JSON.parse(lines[i]); break; } catch {}
+            }
+        }
+        if (!parsed) {
+            console.error('  ✗ 小红书发布: 无法解析响应:', stdout.substring(0, 300));
+            return null;
+        }
+
         if (parsed.ok) {
             console.log(`  ✓ 小红书发布成功（仅自己可见）！笔记ID: ${parsed.data?.id}`);
             console.log(`  💡 请在小红书App中审查后手动公开`);
@@ -199,7 +220,7 @@ ${sectionBriefs}
 请直接输出小红书笔记正文。`;
 
     // 推理模型思考链很长，需要给足空间保证正文完整输出
-    return callLLM(systemPrompt, userPrompt, { maxTokens: 8000 });
+    return callLLM(systemPrompt, userPrompt, { maxTokens: 16384 });
 }
 
 function isValidXhsContent(content) {
