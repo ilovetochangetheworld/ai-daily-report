@@ -200,8 +200,10 @@ function fixupXhsContent(content, date) {
     text = text.replace(/\n{3,}/g, '\n\n').trim();
     if (text.length < 120) return null;
 
+    // 强制「🔥 今日最值得关注」区域每条之间空一行
+    text = fixHighlightsSpacing(text);
+
     const reportLink = 'ilovetochangetheworld.github.io/ai-daily-report';
-    const dateStr = date.substring(5).replace('-', '.');
 
     // 补链接：LLM 常漏
     if (!text.includes(reportLink)) {
@@ -221,6 +223,39 @@ function fixupXhsContent(content, date) {
     }
 
     return text;
+}
+
+/**
+ * 确保「🔥 今日最值得关注」区域每条新闻之间有空行分隔
+ * 处理 LLM 输出中常见的：条目紧贴、只换行不空行
+ */
+function fixHighlightsSpacing(text) {
+    // 匹配 🔥 区域：从标题到下一个段落标题（📌 / 🔗 / 📊 / # 标签）
+    const highlightsRegex = /(🔥\s*今日最值得关注)\n([\s\S]*?)(?=\n[📌🔗📊#]|\n━━|$)/;
+    const match = text.match(highlightsRegex);
+    if (!match) return text;
+
+    const header = match[1];
+    let body = match[2].trim();
+
+    // 如果条目间已有空行分隔，不改
+    if (body.includes('\n\n')) return text;
+
+    // 在每个 emoji 开头的条目前插入空行，确保组间有间距
+    const emojiStart = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}⚡🔥📌🔗📊💡🚀🔬🌍💻⭐💬]/u;
+    const lines = body.split('\n');
+    const result = [];
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        // emoji 开头的新条目（非首条），如果上一行不是空行，插入空行
+        if (line.trim() && emojiStart.test(line) && result.length > 0 && result[result.length - 1].trim() !== '') {
+            result.push('');
+        }
+        result.push(line);
+    }
+    const fixedBody = result.join('\n');
+
+    return text.replace(match[0], `${header}\n\n${fixedBody}`);
 }
 
 async function generateXhsContentByLLM(fullMarkdown, date) {
@@ -243,14 +278,27 @@ async function generateXhsContentByLLM(fullMarkdown, date) {
 
 输出要求：
 - 第一行是标题，20字以内，格式类似「⚡️主题｜AI日报MM.DD」
-- 开头用1句话说明“为什么值得看”，不要官方腔
+- 开头用1句话说明"为什么值得看"，不要官方腔
 - 输出「🔥 今日最值得关注」并列出 6-8 条
-- 每条包含：emoji + 短标题 + 1句判断，不要超过70字
+- 每条格式：emoji + 短标题 + 1句判断，不超过70字
+- 【关键】每条之间必须空一行，即每条占两行（内容行+空行），确保小红书渲染时条目之间有间距
 - 加一段「📌 为什么要收藏」：3个短句，强调复盘、选题、产品判断
 - 加一句评论区引导问题
 - 末尾包含完整日报链接和话题标签
 - 不要编造来源、数据、公司名；不确定就写得克制
-- 不要输出 Markdown 表格，不要输出代码块`;
+- 不要输出 Markdown 表格，不要输出代码块
+
+格式示例：
+🔥 今日最值得关注
+
+🚀 Claude Fable 5 发布
+安全护栏下的神话级模型，代码工程能力质的飞跃
+
+🔬 SFT范式被打破
+传统对演示轨迹的严格拟合会破坏预训练先验
+
+🌍 Agent支付基建落地
+百度布局Agent全球支付，标志从辅助工具向自主经济实体演进`;
 
     const userPrompt = `日期：${date}
 总计：${totalItems} 条精华，${sections.length} 个维度
