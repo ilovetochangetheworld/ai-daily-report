@@ -93,9 +93,9 @@ function generateXhsContent(fullMarkdown, date) {
 async function publishToXhs({ date, fullMarkdown, signals }) {
     console.log('\n📕 小红书发布流程...');
 
-    // 1. 生成小红书版内容（模板组装，完整7板块）
+    // 1. 生成小红书版内容（优先平台化文案，失败则模板兜底）
     console.log('  → 生成小红书版内容...');
-    const xhsContent = generateXhsContent(fullMarkdown, date);
+    const xhsContent = await generateXhsContentForPublish(fullMarkdown, date);
     console.log(`  ✓ 内容生成完成 (${xhsContent.length} 字)`);
 
     // 2. 生成封面 + 板块详解图 (HTML+Puppeteer)
@@ -139,6 +139,69 @@ async function publishToXhs({ date, fullMarkdown, signals }) {
         console.error('  ✗ 小红书发布异常:', error.message?.substring(0, 200));
         return null;
     }
+}
+
+async function generateXhsContentForPublish(fullMarkdown, date) {
+    if (process.env.XHS_LLM_CONTENT === 'false') {
+        return generateXhsContent(fullMarkdown, date);
+    }
+
+    try {
+        const llmContent = await generateXhsContentByLLM(fullMarkdown, date);
+        if (isValidXhsContent(llmContent)) {
+            return llmContent.trim();
+        }
+        console.log('  ⚠ 小红书 LLM 文案不完整，使用模板文案');
+    } catch (error) {
+        console.log(`  ⚠ 小红书 LLM 文案生成失败，使用模板文案: ${error.message?.substring(0, 120)}`);
+    }
+    return generateXhsContent(fullMarkdown, date);
+}
+
+async function generateXhsContentByLLM(fullMarkdown, date) {
+    const { callLLM } = require('./llm');
+    const sections = parseFullSections(fullMarkdown);
+    const totalItems = sections.reduce((sum, s) => sum + s.items.length, 0);
+    const sectionBriefs = sections.map(sec => {
+        const emoji = SECTION_EMOJIS[sec.title] || sec.emoji || '📌';
+        const items = sec.items.slice(0, 3).map(item =>
+            `- ${item.subtitle}：${compactBrief(item.summary, 70)}`
+        ).join('\n');
+        return `## ${emoji} ${sec.title}\n${items}`;
+    }).join('\n\n');
+
+    const systemPrompt = `你是懂小红书科技内容分发的 AI 日报编辑。把日报整理成一篇小红书笔记正文。
+
+输出要求：
+- 第一行是标题，20字以内，格式类似「⚡️主题｜AI日报MM.DD」
+- 开头用1句话说明“为什么值得看”，不要官方腔
+- 输出「🔥 今日最值得关注」并列出 6-8 条
+- 每条包含：emoji + 短标题 + 1句判断，不要超过70字
+- 加一段「📌 为什么要收藏」：3个短句，强调复盘、选题、产品判断
+- 加一句评论区引导问题
+- 末尾包含完整日报链接和话题标签
+- 不要编造来源、数据、公司名；不确定就写得克制
+- 不要输出 Markdown 表格，不要输出代码块`;
+
+    const userPrompt = `日期：${date}
+总计：${totalItems} 条精华，${sections.length} 个维度
+完整日报提炼如下：
+
+${sectionBriefs}
+
+请直接输出小红书笔记正文。`;
+
+    return callLLM(systemPrompt, userPrompt, { maxTokens: 3000 });
+}
+
+function isValidXhsContent(content) {
+    if (!content || typeof content !== 'string') return false;
+    const text = content.trim();
+    return text.length >= 180
+        && text.length <= 1800
+        && text.includes('AI日报')
+        && text.includes('#')
+        && text.includes('ilovetochangetheworld.github.io/ai-daily-report');
 }
 
 /**
@@ -185,4 +248,4 @@ function compactBrief(summary, maxLen) {
     return brief.replace(/[，；、\s]+$/, '');
 }
 
-module.exports = { publishToXhs, generateXhsContent };
+module.exports = { publishToXhs, generateXhsContent, generateXhsContentForPublish };

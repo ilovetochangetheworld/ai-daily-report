@@ -236,11 +236,18 @@ async function analyzeAsExpert(dimension, date) {
 
 输出规范：
 - 使用 Markdown 格式
+- 开头先输出一行「**本板块主线：**...」，用一句话概括这个维度今天真正的主线，不要罗列新闻
 - 每个分析点以 ### 开头，包含简明标题
-- 先给出一句核心判断（加粗），然后展开分析思路——你是怎么得出这个判断的，依据是什么，推演链条是什么
+- 每个分析点先给出一句核心判断，格式必须是：**核心判断（证据强度：强/中/弱）：...**
+- 证据强度判定标准：
+  - 强：有多个独立来源互相印证，或来自官方发布/论文/代码仓库/财报等一手来源
+  - 中：有单一可信来源，或多个弱来源指向同一趋势
+  - 弱：主要是社媒观点、间接推断、早期传闻或样本很少的趋势
+- 展开分析时必须说明：你是怎么得出判断的、依据是什么、推演链条是什么
+- 当证据强度为弱或中时，必须写一句「不确定性：...」，说明这个判断可能错在哪里
 - 不是每条都要写「反向视角」「实战建议」，只有确实有洞察价值时才写，不要凑模板
 - **引用信号时必须保留原始来源链接**，格式为 [来源名](URL)
-- 语言专业犀利，避免空话套话
+- 语言专业、克制、犀利；宁可少写，也不要把弱信号推演成定论
 - 中文输出`;
 
     const signalsText = dimension.signals.length > 0
@@ -252,7 +259,7 @@ async function analyzeAsExpert(dimension, date) {
 
     try {
         const markdown = await callLLM(systemPrompt,
-            `请分析以下与「${dimension.name}」相关的 ${dimension.signals.length} 条信号（日期：${date}）：\n\n${signalsText}\n\n生成 2-3 个分析点。${dimension.signals.length === 0 ? '由于该维度无直接信号，请结合当日AI行业整体趋势给出前瞻性观点。' : ''}`,
+            `请分析以下与「${dimension.name}」相关的 ${dimension.signals.length} 条信号（日期：${date}）：\n\n${signalsText}\n\n生成 2-3 个分析点。优先找“共同指向的主线”，不要平均分配篇幅。${dimension.signals.length === 0 ? '由于该维度无直接信号，只能给弱证据前瞻；必须明确标注证据强度为弱，并说明不确定性。' : ''}`,
             { maxTokens: STEP_TOKENS.expertAnalysis }
         );
         return { dimension: dimension.id, name: dimension.name, nameEn: dimension.nameEn, icon: dimension.icon, markdown };
@@ -286,7 +293,7 @@ async function generateHeadline(classified, date) {
 
         try {
             const headline = await callLLM(
-                '你是日报主编。根据今日 Top 5 AI 信号，生成一句话的今日头条摘要（30-60字，中文，突出最重大的变化和趋势）。只输出摘要，不要任何前缀。',
+                '你是日报主编。根据今日 Top 5 AI 信号，生成一句话的今日头条摘要（30-60字，中文）。优先提炼“多个信号共同指向的行业变化”，不要只复述单条新闻；避免夸大和标题党。只输出摘要，不要任何前缀。',
                 `日期: ${date}\n\nTop 5 信号:\n${topText}`,
                 { maxTokens: STEP_TOKENS.headline }
             );
@@ -375,9 +382,11 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
 2. 每个板块2-4条内容
 3. **每条资讯必须附带原始来源链接**
 4. 开源项目必须附链接
-5. 语言专业犀利，重要关键词加粗
-6. 分析要有思路——怎么得出判断的，推演链条是什么；不要凑「反向视角」「实战建议」等模板骨架
-7. 整合专家洞察，不是复制粘贴`
+5. 每个板块开头保留或重写一句「本板块主线」，让整篇像主编选题，不像逐条摘要
+6. 保留「证据强度：强/中/弱」；弱证据判断不得写成确定结论
+7. 语言专业克制、重点关键词加粗
+8. 分析要有思路——怎么得出判断的，推演链条是什么；不要凑「反向视角」「实战建议」等模板骨架
+9. 整合专家洞察，不是复制粘贴`
         : `You are an AI daily report editor. Generate a structured daily report (English). Same 7-section structure. Same strict rules.`;
 
     const expertText = expertAnalyses.map(ea =>
@@ -396,7 +405,7 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
     }).join('\n');
 
     const userPrompt = isZh
-        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键：\n1. 必须输出全部7个板块\n2. 如果某板块信号不足，请基于行业趋势补充前瞻性分析\n3. 每条资讯必须有[来源](URL)链接\n4. 分析要有推演思路，不要凑模板骨架`
+        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键：\n1. 必须输出全部7个板块\n2. 每个板块先给一句「本板块主线」，再给具体分析点\n3. 如果某板块信号不足，请基于行业趋势补充前瞻性分析，但必须标注证据强度为弱\n4. 每条资讯必须有[来源](URL)链接\n5. 保留或重写「证据强度：强/中/弱」\n6. 分析要有推演思路，不要凑模板骨架\n7. 站在主编视角重组主线，不要机械拼接专家原文`
         : `Generate the AI Daily Report for ${date} (English). Same rules.`;
 
     const { markdown } = await generateReportByTemplate(lang, date, classified, expertAnalyses, headline, allSignals);
