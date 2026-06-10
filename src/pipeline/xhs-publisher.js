@@ -77,9 +77,12 @@ function generateXhsContent(fullMarkdown, date) {
         content += `${emoji} ${compactTitle(item.subtitle, 24)}\n${brief}\n\n`;
     }
 
+    const datePath = date.replace(/-/g, '/');
+    const reportLink = `ilovetochangetheworld.github.io/ai-daily-report/zh/${datePath}.html`;
+
     content += '━━━━━━━━━━━━━━━━\n\n';
     content += '📌 卡片覆盖完整板块：产品、研究、行业、开源、社媒、Coding、机会。\n';
-    content += '🔗 完整日报：ilovetochangetheworld.github.io/ai-daily-report\n';
+    content += `🔗 完整日报：${reportLink}\n`;
 
     // 统计数据
     const totalItems = sections.reduce((sum, s) => sum + s.items.length, 0);
@@ -203,17 +206,25 @@ function fixupXhsContent(content, date) {
     // 强制「🔥 今日最值得关注」区域每条之间空一行
     text = fixHighlightsSpacing(text);
 
-    const reportLink = 'ilovetochangetheworld.github.io/ai-daily-report';
+    // 正确的当日日报链接
+    const datePath = date.replace(/-/g, '/');  // 2026-06-10 → 2026/06/10
+    const correctLink = `ilovetochangetheworld.github.io/ai-daily-report/zh/${datePath}.html`;
 
-    // 补链接：LLM 常漏
-    if (!text.includes(reportLink)) {
-        text += `\n🔗 完整日报：${reportLink}`;
-    }
+    // 先删除 LLM 可能输出的任何旧链接（首页链接或错误日期链接），避免重复
+    text = text.replace(/ilovetochangetheworld\.github\.io\/ai-daily-report[^\s\n]*/g, '').trim();
+    // 清理残留的 「🔗 完整日报：」「完整日报：」 等前缀文字
+    text = text.replace(/^[🔗📅🔍]*\s*完整日报[：:]\s*$/gm, '').trim();
+
+    // 在末尾统一追加正确的链接
+    text += `\n🔗 完整日报：${correctLink}`;
 
     // 补标签：LLM 常漏或格式不对
     if (!text.includes('#')) {
         text += `\n\n#AI日报 #大模型 #AIAgent #AI工具 #科技趋势 #AI创业`;
     }
+
+    // 再次清理连续空行
+    text = text.replace(/\n{3,}/g, '\n\n').trim();
 
     // 超长截断（小红书正文上限约 1800 字）
     if (text.length > 1800) {
@@ -230,30 +241,19 @@ function fixupXhsContent(content, date) {
  * 处理 LLM 输出中常见的：条目紧贴、只换行不空行
  */
 function fixHighlightsSpacing(text) {
-    // 匹配 🔥 区域：从标题到下一个段落标题（📌 / 🔗 / 📊 / # 标签）
-    const highlightsRegex = /(🔥\s*今日最值得关注)\n([\s\S]*?)(?=\n[📌🔗📊#]|\n━━|$)/;
+    // 匹配 🔥 区域：从标题到段落分隔线 或 「📌 为什么要收藏」
+    // 注意：不能把条目开头 emoji（🚀🔬🌍💻💡💬）当成段落结束标志
+    const highlightsRegex = /(🔥\s*今日最值得关注)\n([\s\S]*?)(?=\n📌|\n━━|\n🔗|\n📊|\n#[A-Z]|$)/;
     const match = text.match(highlightsRegex);
     if (!match) return text;
 
     const header = match[1];
     let body = match[2].trim();
 
-    // 如果条目间已有空行分隔，不改
-    if (body.includes('\n\n')) return text;
-
-    // 在每个 emoji 开头的条目前插入空行，确保组间有间距
-    const emojiStart = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}⚡🔥📌🔗📊💡🚀🔬🌍💻⭐💬]/u;
-    const lines = body.split('\n');
-    const result = [];
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        // emoji 开头的新条目（非首条），如果上一行不是空行，插入空行
-        if (line.trim() && emojiStart.test(line) && result.length > 0 && result[result.length - 1].trim() !== '') {
-            result.push('');
-        }
-        result.push(line);
-    }
-    const fixedBody = result.join('\n');
+    // 每条新闻之间需要空行分隔——最简单的办法是每行后都加空行
+    const lines = body.split('\n').map(l => l.trim()).filter(l => l);
+    // 每行后面跟一个空行
+    const fixedBody = lines.join('\n\n');
 
     return text.replace(match[0], `${header}\n\n${fixedBody}`);
 }
@@ -262,6 +262,7 @@ async function generateXhsContentByLLM(fullMarkdown, date) {
     const { callLLM } = require('./llm');
     const sections = parseFullSections(fullMarkdown);
     const totalItems = sections.reduce((sum, s) => sum + s.items.length, 0);
+    const datePath = date.replace(/-/g, '/');  // 2026-06-10 → 2026/06/10
     const sectionBriefs = sections.map(sec => {
         const emoji = SECTION_EMOJIS[sec.title] || sec.emoji || '📌';
         const items = sec.items.slice(0, 3)
@@ -281,12 +282,13 @@ async function generateXhsContentByLLM(fullMarkdown, date) {
 - 开头用1句话说明"为什么值得看"，不要官方腔
 - 输出「🔥 今日最值得关注」并列出 6-8 条
 - 每条格式：emoji + 短标题 + 1句判断，不超过70字
-- 【关键】每条之间必须空一行，即每条占两行（内容行+空行），确保小红书渲染时条目之间有间距
+- 【关键】每条新闻之间必须空一行，确保小红书渲染时条目之间有清晰间距
 - 加一段「📌 为什么要收藏」：3个短句，强调复盘、选题、产品判断
 - 加一句评论区引导问题
-- 末尾包含完整日报链接和话题标签
+- 末尾一行输出完整日报链接，格式固定为：「🔗 完整日报：ilovetochangetheworld.github.io/ai-daily-report/zh/${datePath}.html」
 - 不要编造来源、数据、公司名；不确定就写得克制
 - 不要输出 Markdown 表格，不要输出代码块
+- 不要在链接部分输出任何其他 URL 或多余文字
 
 格式示例：
 🔥 今日最值得关注
