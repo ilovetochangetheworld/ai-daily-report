@@ -197,7 +197,8 @@ ${sectionBriefs}
 
 请直接输出小红书笔记正文。`;
 
-    return callLLM(systemPrompt, userPrompt, { maxTokens: 3000 });
+    // 推理模型思考链很长，需要给足空间保证正文完整输出
+    return callLLM(systemPrompt, userPrompt, { maxTokens: 8000 });
 }
 
 function isValidXhsContent(content) {
