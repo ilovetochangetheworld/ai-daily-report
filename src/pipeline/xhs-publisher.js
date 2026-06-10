@@ -172,14 +172,55 @@ async function generateXhsContentForPublish(fullMarkdown, date) {
 
     try {
         const llmContent = await generateXhsContentByLLM(fullMarkdown, date);
-        if (isValidXhsContent(llmContent)) {
-            return llmContent.trim();
+        const validated = fixupXhsContent(llmContent, date);
+        if (validated) {
+            console.log(`  ✓ LLM 文案校验通过 (${validated.length} 字)`);
+            return validated;
         }
         console.log('  ⚠ 小红书 LLM 文案不完整，使用模板文案');
     } catch (error) {
         console.log(`  ⚠ 小红书 LLM 文案生成失败，使用模板文案: ${error.message?.substring(0, 120)}`);
     }
     return generateXhsContent(fullMarkdown, date);
+}
+
+/**
+ * 修复 LLM 输出的常见缺失：补链接、补标签、去思考链残留
+ * 返回修正后的文案，或 null 如果内容太短/太碎
+ */
+function fixupXhsContent(content, date) {
+    if (!content || typeof content !== 'string') return null;
+    let text = content.trim();
+
+    // 太短或太长都不可用
+    if (text.length < 120) return null;
+
+    // 去掉残留的思考链标记（推理模型有时把思考链混入 content）
+    text = text.replace(/(?:^|\n)(?:分析思路|推演链条|核心判断|关键证据|实战建议|反向视角|不确定性)[：:][^\n]*/g, '');
+    text = text.replace(/\n{3,}/g, '\n\n').trim();
+    if (text.length < 120) return null;
+
+    const reportLink = 'ilovetochangetheworld.github.io/ai-daily-report';
+    const dateStr = date.substring(5).replace('-', '.');
+
+    // 补链接：LLM 常漏
+    if (!text.includes(reportLink)) {
+        text += `\n🔗 完整日报：${reportLink}`;
+    }
+
+    // 补标签：LLM 常漏或格式不对
+    if (!text.includes('#')) {
+        text += `\n\n#AI日报 #大模型 #AIAgent #AI工具 #科技趋势 #AI创业`;
+    }
+
+    // 超长截断（小红书正文上限约 1800 字）
+    if (text.length > 1800) {
+        const cut = text.substring(0, 1750);
+        const lastPunc = Math.max(cut.lastIndexOf('。'), cut.lastIndexOf('！'), cut.lastIndexOf('？'), cut.lastIndexOf('\n'));
+        text = lastPunc > 500 ? text.substring(0, lastPunc + 1) : cut + '…';
+    }
+
+    return text;
 }
 
 async function generateXhsContentByLLM(fullMarkdown, date) {
