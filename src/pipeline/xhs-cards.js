@@ -99,16 +99,8 @@ function parseFullSections(markdown) {
             const body = sub.replace(/^### .*/m, '').trim();
             let summary = '';
 
-            // 提取 "核心判断" 行（三种格式）
-            // 1. **核心判断：xxx** （整体在一对星号内）
-            // 2. **核心判断：**xxx** （冒号在第一对星号外结尾）
-            // 3. **核心判断**：xxx （冒号在星号外）
-            const coreLine = body.match(/\*\*核心判断[：:]\s*(.+?)\*\*/s) ||
-                             body.match(/\*\*核心判断[：:]\*\*\s*(.+?)\*\*/s) ||
-                             body.match(/\*\*核心判断\*\*[：:]\s*(.+)/);
-            if (coreLine) {
-                summary = cleanCardText(coreLine[1]);
-            }
+            const coreSummary = extractCoreSummary(body);
+            if (coreSummary) summary = coreSummary;
 
             // 产品类条目常直接用首段加粗表达核心判断，而不写“核心判断”。
             if (!summary) {
@@ -127,7 +119,7 @@ function parseFullSections(markdown) {
             }
 
             // 补充第一条关键证据（仅当核心判断未提取到时，或 summary 极短）
-            if (summary && coreLine) {
+            if (summary && coreSummary) {
                 // 核心判断已成功提取，不再追加证据列表
             } else if (summary.length < 40) {
                 const evidences = body.match(/^-\s+(.+)/gm) || [];
@@ -469,9 +461,36 @@ function cleanCardText(str) {
         .replace(/\*\*/g, '')
         .replace(/`/g, '')
         .replace(/^(分析思路与推演链条|分析推演链条|分析思路|推演链条)[：:]\s*/i, '')
-        .replace(/^(核心判断|实战建议|反向视角)[：:]\s*/i, '')
+        .replace(/^核心判断(?:（证据强度[：:][强中弱]）)?[：:]\s*/i, '')
+        .replace(/^(实战建议|反向视角|不确定性)[：:]\s*/i, '')
         .replace(/\s+/g, ' ')
         .trim();
+}
+
+function extractCoreSummary(body) {
+    const text = String(body || '').trim();
+    const strength = '(?:（证据强度[：:][强中弱]）)?';
+    const patterns = [
+        // **核心判断（证据强度：强）：判断正文**
+        new RegExp(`^\\s*\\*\\*核心判断${strength}[：:]\\s*(.+?)\\*\\*`, 's'),
+        // **核心判断（证据强度：强）：** 判断正文
+        new RegExp(`^\\s*\\*\\*核心判断${strength}[：:]\\*\\*\\s*(.+)`, 's'),
+        // **核心判断（证据强度：强）**：判断正文
+        new RegExp(`^\\s*\\*\\*核心判断${strength}\\*\\*[：:]\\s*(.+)`, 's'),
+        // 核心判断（证据强度：强）：判断正文
+        new RegExp(`^\\s*核心判断${strength}[：:]\\s*(.+)`, 's'),
+    ];
+
+    for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (!match) continue;
+        const cleaned = cleanCardText(match[1].split('\n\n')[0]);
+        if (cleaned && !/^核心判断(?:（证据强度[：:][强中弱]）)?[：:]?$/.test(cleaned)) {
+            return cleaned;
+        }
+    }
+
+    return '';
 }
 
 function resolveChromeExecutable(puppeteer) {

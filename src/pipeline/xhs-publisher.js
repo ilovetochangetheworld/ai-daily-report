@@ -72,7 +72,9 @@ function generateXhsContent(fullMarkdown, date) {
     }
 
     for (const { emoji, item } of highlights) {
-        content += `${emoji} ${compactTitle(item.subtitle, 24)}\n${compactBrief(item.summary, 54)}\n\n`;
+        const brief = compactBrief(item.summary, 54);
+        if (!brief) continue;
+        content += `${emoji} ${compactTitle(item.subtitle, 24)}\n${brief}\n\n`;
     }
 
     content += '━━━━━━━━━━━━━━━━\n\n';
@@ -164,9 +166,13 @@ async function generateXhsContentByLLM(fullMarkdown, date) {
     const totalItems = sections.reduce((sum, s) => sum + s.items.length, 0);
     const sectionBriefs = sections.map(sec => {
         const emoji = SECTION_EMOJIS[sec.title] || sec.emoji || '📌';
-        const items = sec.items.slice(0, 3).map(item =>
-            `- ${item.subtitle}：${compactBrief(item.summary, 70)}`
-        ).join('\n');
+        const items = sec.items.slice(0, 3)
+            .map(item => {
+                const brief = compactBrief(item.summary, 70);
+                return brief ? `- ${item.subtitle}：${brief}` : '';
+            })
+            .filter(Boolean)
+            .join('\n');
         return `## ${emoji} ${sec.title}\n${items}`;
     }).join('\n\n');
 
@@ -201,7 +207,8 @@ function isValidXhsContent(content) {
         && text.length <= 1800
         && text.includes('AI日报')
         && text.includes('#')
-        && text.includes('ilovetochangetheworld.github.io/ai-daily-report');
+        && text.includes('ilovetochangetheworld.github.io/ai-daily-report')
+        && !/核心判断(?:（证据强度[：:][强中弱]）)?[：:]\s*(?:\n|$)/.test(text);
 }
 
 /**
@@ -229,9 +236,14 @@ function compactBrief(summary, maxLen) {
         .replace(/`/g, '')
         .replace(/^(分析思路与推演链条|分析推演链条|分析思路|推演链条)[：:]\s*/i, '')
         .replace(/^关键证据[：:]\s*/i, '')
-        .replace(/^核心判断[：:]\s*/i, '')
+        .replace(/^核心判断(?:（证据强度[：:][强中弱]）)?[：:]\s*/i, '')
+        .replace(/^(实战建议|反向视角|不确定性)[：:]\s*/i, '')
         .replace(/\s+/g, ' ')
         .trim();
+
+    if (/^核心判断(?:（证据强度[：:][强中弱]）)?[：:]?$/.test(brief)) {
+        return '';
+    }
 
     if (brief.includes('；')) {
         brief = brief.split('；')[0];
