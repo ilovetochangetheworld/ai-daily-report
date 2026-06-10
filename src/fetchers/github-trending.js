@@ -49,7 +49,8 @@ class GitHubTrendingFetcher extends BaseFetcher {
                     source: 'github',
                     category: 'project',
                     published_date: new Date().toISOString(),
-                    score: starsToday || 10,
+                    // starsToday 不直接作为 score，限制上限为 50，避免霸占 Top5
+                    score: Math.min(starsToday || 10, 50),
                     summary: description,
                     image_url: '',  // 不提取头像等无关小图标
                     metadata: {

@@ -275,8 +275,13 @@ async function generateHeadline(classified, date) {
 
     if (modelConfig.type !== 'reasoning') {
         // 非推理模型，用 LLM 生成高质量标题
-        const topSignals = Object.values(classified).flat()
-            .sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
+        // 优先用新闻信号，不足再用全量兜底
+        const allSignals = Object.values(classified).flat()
+            .sort((a, b) => (b.score || 0) - (a.score || 0));
+        const newsOnly = allSignals.filter(s =>
+            !s.source.includes('GitHub') && !s.source.includes('Hugging') && !s.source.includes('github') && !s.source.includes('huggingface')
+        );
+        const topSignals = newsOnly.length >= 3 ? newsOnly.slice(0, 5) : allSignals.slice(0, 5);
         const topText = topSignals.map((s, i) => `${i + 1}. ${s.title} (${s.source})`).join('\n');
 
         try {
@@ -292,14 +297,15 @@ async function generateHeadline(classified, date) {
     }
 
     // 模板生成（推理模型降级方案）
-    const topSignals = Object.values(classified).flat()
+    // 优先选非 GitHub/数据集的真实新闻信号作为标题来源
+    const newsSignals = Object.values(classified).flat()
+        .filter(s => !s.source.includes('GitHub') && !s.source.includes('Hugging') && !s.source.includes('github') && !s.source.includes('huggingface'))
         .sort((a, b) => (b.score || 0) - (a.score || 0));
 
-    // 优先选非 GitHub/数据集的真实新闻信号
-    const newsSignals = topSignals.filter(s =>
-        !s.source.includes('GitHub') && !s.source.includes('Hugging') && !s.source.includes('github')
-    );
-    const pickFrom = newsSignals.length >= 2 ? newsSignals : topSignals;
+    // 如果新闻信号不够，再用全量信号兜底
+    const fallbackSignals = Object.values(classified).flat()
+        .sort((a, b) => (b.score || 0) - (a.score || 0));
+    const pickFrom = newsSignals.length >= 2 ? newsSignals : fallbackSignals;
 
     if (pickFrom.length === 0) return 'AI 行业日报';
 
@@ -378,8 +384,12 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
         `## ${ea.icon} ${isZh ? ea.name : ea.nameEn}\n\n${ea.markdown}`
     ).join('\n\n---\n\n');
 
-    const topSignals = Object.values(classified).flat()
-        .sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
+    const allSorted = Object.values(classified).flat()
+        .sort((a, b) => (b.score || 0) - (a.score || 0));
+    const newsOnly = allSorted.filter(s =>
+        !s.source.includes('GitHub') && !s.source.includes('Hugging') && !s.source.includes('github') && !s.source.includes('huggingface')
+    );
+    const topSignals = newsOnly.length >= 3 ? newsOnly.slice(0, 5) : allSorted.slice(0, 5);
     const topSignalsText = topSignals.map((s, i) => {
         let line = `${i + 1}. **${s.title}** [${s.source}](${s.url})`;
         return line;
@@ -424,8 +434,14 @@ async function generateReportByTemplate(lang, date, classified, expertAnalyses, 
     let markdown = `# AI 资讯日报 ${date}\n\n> 📰 ${headline}\n\n---\n\n`;
 
     // Top 5 信号摘要
-    const topSignals = Object.values(classified).flat()
-        .sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
+    // 优先展示真实新闻来源，GitHub/HuggingFace 项目不占 Top 5 名额
+    const allSorted = Object.values(classified).flat()
+        .sort((a, b) => (b.score || 0) - (a.score || 0));
+    const newsTop = allSorted.filter(s =>
+        !s.source.includes('GitHub') && !s.source.includes('Hugging') && !s.source.includes('github') && !s.source.includes('huggingface')
+    ).slice(0, 5);
+    // 新闻不够 5 条时用全量兜底
+    const topSignals = newsTop.length >= 3 ? newsTop : allSorted.slice(0, 5);
 
     if (topSignals.length > 0) {
         markdown += `## 📌 今日 Top 5 信号\n\n`;

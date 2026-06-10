@@ -44,7 +44,7 @@ class HuggingFaceFetcher extends BaseFetcher {
                     source: 'huggingface',
                     category: 'project',
                     published_date: model.lastModified || new Date().toISOString(),
-                    score: model.likes || 0,
+                    score: Math.min(model.likes || 0, 50),
                     summary: model.cardData?.summary || model.description || '',
                     metadata: {
                         type: 'model',
@@ -83,7 +83,7 @@ class HuggingFaceFetcher extends BaseFetcher {
                     source: 'huggingface',
                     category: 'paper',
                     published_date: dataset.lastModified || new Date().toISOString(),
-                    score: dataset.likes || 0,
+                    score: Math.min(dataset.likes || 0, 50),
                     summary: dataset.description || '',
                     metadata: {
                         type: 'dataset',
