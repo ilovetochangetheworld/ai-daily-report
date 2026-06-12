@@ -99,6 +99,13 @@ function generateXhsContent(fullMarkdown, date) {
 async function publishToXhs({ date, fullMarkdown, signals }) {
     console.log('\n📕 小红书发布流程...');
 
+    // 0. 防重发：检查当天是否已发布过同日期的笔记
+    const alreadyPublished = await checkTodayPublished(date);
+    if (alreadyPublished) {
+        console.log(`  ⚠ 今日(${date})小红书笔记已存在，跳过发布（防重复）`);
+        return null;
+    }
+
     // 1. 生成小红书版内容（优先平台化文案，失败则模板兜底）
     console.log('  → 生成小红书版内容...');
     const xhsContent = await generateXhsContentForPublish(fullMarkdown, date);
@@ -373,6 +380,53 @@ function compactBrief(summary, maxLen) {
         brief = lastPunc > 12 ? brief.substring(0, lastPunc) + '…' : cut + '…';
     }
     return brief.replace(/[，；、\s]+$/, '');
+}
+
+/**
+ * 检查当天是否已发布过同日期的小红书笔记
+ * 通过 xhs my-notes 获取最近笔记，匹配标题中的日期
+ */
+async function checkTodayPublished(date) {
+    try {
+        const result = spawnSync('xhs', ['my-notes', '--json'], {
+            encoding: 'utf8',
+            timeout: 15000,
+        });
+        const stdout = (result.stdout || '').trim();
+        if (!stdout) return false;
+
+        let data;
+        try { data = JSON.parse(stdout); } catch {
+            // 尝试找最后一行 JSON
+            const lines = stdout.split('\n');
+            for (let i = lines.length - 1; i >= 0; i--) {
+                try { data = JSON.parse(lines[i]); break; } catch {}
+            }
+        }
+        if (!data?.data?.notes) return false;
+
+        // 日期格式：06.12 或 MM.DD
+        const dateShort = date.substring(5).replace('-', '.');
+        // 也匹配 MM-DD 和 M.D 格式
+        const datePatterns = [
+            dateShort,                           // 06.12
+            date.substring(5).replace('-', '-'), // 06-12
+            date.substring(5),                   // 06-12
+        ];
+
+        for (const note of data.data.notes) {
+            const title = note.display_title || note.title || '';
+            if (title.includes('AI日报') && datePatterns.some(p => title.includes(p))) {
+                console.log(`  ℹ 发现已有当日笔记: ${title} (${note.time || ''})`);
+                return true;
+            }
+        }
+        return false;
+    } catch (error) {
+        // 检查失败不阻塞发布
+        console.log(`  ⚠ 无法检查已有笔记: ${error.message?.substring(0, 80)}`);
+        return false;
+    }
 }
 
 module.exports = { publishToXhs, generateXhsContent, generateXhsContentForPublish };
