@@ -37,12 +37,14 @@ function generateXhsContent(fullMarkdown, date) {
         || sections.find(sec => sec.items?.length)?.items?.[0]?.summary
         || topSignals[0]?.title
         || '今天 AI 圈最值得复盘的信号';
-    const headline = makeXhsHeadline(mainline, topSignals[0]?.title);
+    const useLocalizedMainline = shouldPreferTopSignal(mainline, topSignals[0]?.title);
+    const displayMainline = useLocalizedMainline ? buildLocalizedMainline(topSignals) : mainline;
+    const headline = makeXhsHeadline(displayMainline, topSignals[0]?.title);
     const dateStr = date.substring(5).replace('-', '.');
     const title = `⚡️${headline}｜AI日报${dateStr}`;
 
     let content = title + '\n\n';
-    content += `${compactBrief(mainline, 72)}\n\n`;
+    content += `${compactBrief(displayMainline, 72)}\n\n`;
     content += '我把今天的 AI 信号整理成卡片：先看图抓方向，再看正文挑项目和机会。\n\n';
     content += '━━━━━━━━━━━━━━━━\n\n';
     content += '🔥 今日 Top 5\n\n';
@@ -268,6 +270,7 @@ async function generateXhsContentByLLM(fullMarkdown, date) {
 - 开头用2句话：第一句讲今日主线，第二句说明“先看图，再看正文”的阅读方式
 - 输出「🔥 今日 Top 5」并列出 5 条，不要超过 5 条
 - 每条格式：emoji + Top序号 + 短标题 + 换行 + 1句判断，不超过70字
+- Top5 短标题必须面向中文读者改写；英文项目名可以保留，但后面要接中文解释，例如「FastGraphRAG：用 PageRank 改进 RAG」
 - 【关键】每条新闻之间必须空一行，确保小红书渲染时条目之间有清晰间距
 - 加一段「📌 为什么要收藏」：3个编号短句，分别强调主线判断、开源项目、工程落地
 - 加一句评论区引导问题，围绕“明天想看模型/开源/工程化哪类”
@@ -371,6 +374,7 @@ function makeXhsHeadline(mainline, fallback) {
     const source = compactBrief(mainline || fallback || 'AI信号复盘', 22)
         .replace(/^今日主线[：:]\s*/, '')
         .replace(/^[“”"']+|[“”"']+$/g, '');
+    if (/开源项目密集|AI IDE|RAG 工具/.test(source)) return '开源项目爆发';
     if (/show\s+hn/i.test(source)) return '开源项目爆发';
     if (source.length <= 14) return source || 'AI信号复盘';
 
@@ -378,6 +382,27 @@ function makeXhsHeadline(mainline, fallback) {
     if (/show\s+hn/i.test(firstClause)) return '开源项目爆发';
     if (firstClause.length >= 6 && firstClause.length <= 14) return firstClause;
     return source.substring(0, 14);
+}
+
+function shouldPreferTopSignal(mainline, topTitle) {
+    if (!topTitle) return false;
+    const text = String(mainline || '');
+    if (!hasCjk(text) && hasCjk(topTitle)) return true;
+    return /show\s+hn|better rag using|open-source ai native/i.test(text) && hasCjk(topTitle);
+}
+
+function hasCjk(text) {
+    return /[\u4e00-\u9fa5]/.test(String(text || ''));
+}
+
+function buildLocalizedMainline(topSignals) {
+    const titles = topSignals.map(item => item.title).join('｜');
+    if (/FastGraphRAG|Aide|Deta Surf|Notebook|IDE|RAG/.test(titles)) {
+        return '开源项目密集冒头，AI IDE、RAG 检索优化和本地优先 Notebook 同时升温。';
+    }
+    return topSignals[0]?.title
+        ? `今天最值得看的信号是：${topSignals[0].title}。`
+        : '今天 AI 圈最值得复盘的信号集中在产品、开源和工程落地。';
 }
 
 function buildXhsHighlights(sections, topSignals) {
@@ -395,7 +420,7 @@ function buildXhsHighlights(sections, topSignals) {
             const briefSource = matched?.item?.summary || sourceBasedBrief(signal);
             return {
                 emoji: matched?.emoji || sourceBasedEmoji(signal),
-                title: `Top${signal.rank} ${compactTitle(signal.title, 22)}`,
+                title: `Top${signal.rank} ${compactTitle(signal.title, 30)}`,
                 brief: compactBrief(briefSource, 64),
             };
         });

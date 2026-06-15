@@ -21,6 +21,15 @@ const SECTION_AUDIENCE = {
     'Harness Engineering': '工程团队',
     '发现机会': '创业/独立开发',
 };
+const SECTION_FOCUS = {
+    '产品与功能更新': '看产品方向',
+    '前沿研究': '看技术拐点',
+    '行业展望与社会影响': '看资本/监管',
+    'Open-source Radar': '看项目价值',
+    '社区信号与反共识': '看真实反馈',
+    'Harness Engineering': '看落地风险',
+    '发现机会': '看机会窗口',
+};
 
 /**
  * 从日报 Markdown 解析出 7 板块的所有条目
@@ -106,6 +115,13 @@ function parseFullSections(markdown) {
         }
         if (emoji && !existing.emoji) existing.emoji = emoji;
 
+        if (normalizedTitle === 'Open-source Radar') {
+            const rankedItems = extractOpenSourceRankings(sec);
+            if (rankedItems.length) {
+                existing.items.push(...rankedItems);
+            }
+        }
+
         // 提取 ### 子条目
         const subs = sec.split(/(?=^### )/m).filter(s => s.startsWith('### '));
         const items = [];
@@ -113,6 +129,9 @@ function parseFullSections(markdown) {
             const subMatch = sub.match(/^### (.+)/);
             if (!subMatch) continue;
             let subTitle = cleanCardText(subMatch[1].replace(/^\d+\.\s*/, '').trim());
+            if (normalizedTitle === 'Open-source Radar' && /top\s*5|排名表|趋势分析|趋势判断/i.test(subTitle)) {
+                continue;
+            }
 
             // 提取核心判断段落作为摘要
             const body = sub.replace(/^### .*/m, '').trim();
@@ -153,7 +172,7 @@ function parseFullSections(markdown) {
 
             // 截断到 150 字
             if (summary.length > 150) {
-                summary = summary.substring(0, 147) + '...';
+                summary = tidyCardText(summary.substring(0, 147)) + '…';
             }
 
             // 如果还是没有，从关键证据里取第一条
@@ -161,12 +180,12 @@ function parseFullSections(markdown) {
                 const evidence = body.match(/-\s*(.+)/);
                 if (evidence) {
                     summary = cleanCardText(evidence[1]);
-                    if (summary.length > 120) summary = summary.substring(0, 117) + '...';
+                    if (summary.length > 120) summary = tidyCardText(summary.substring(0, 117)) + '…';
                 }
             }
 
-            if (subTitle && summary) {
-                existing.items.push({ subtitle: subTitle, summary });
+            if (subTitle && summary && !existing.items.some(item => similarItem(item.subtitle, subTitle))) {
+                existing.items.push({ subtitle: subTitle, summary: tidyCardText(summary) });
             }
         }
 
@@ -216,9 +235,10 @@ function extractTopSignals(markdown) {
         .map((line, index) => {
             const titleMatch = line.match(/^\-\s+\*\*(.+?)\*\*/);
             const linkMatch = line.match(/\[([^\]]+)\]\(([^)]+)\)\s*$/);
+            const rawTitle = cleanCardText(titleMatch ? titleMatch[1] : line.replace(/^\-\s+/, ''));
             return {
                 rank: index + 1,
-                title: cleanCardText(titleMatch ? titleMatch[1] : line.replace(/^\-\s+/, '')),
+                title: localizeSignalTitle(rawTitle),
                 source: linkMatch ? cleanCardText(linkMatch[1]) : 'source',
             };
         })
@@ -244,11 +264,93 @@ function deriveDailyTheme(markdown, sections, topSignals) {
     return '今天 AI 圈最值得复盘的信号';
 }
 
+function deriveCoverInsights(sections, topSignals) {
+    const insights = [];
+    if (topSignals[0]?.title) {
+        insights.push(`最热信号：${compactText(topSignals[0].title, 28)}`);
+    }
+
+    const oss = sections.find(section => section.title === 'Open-source Radar')?.items?.[0];
+    if (oss) {
+        insights.push(`开源雷达：${compactText(oss.subtitle, 30)}`);
+    }
+
+    const harness = sections.find(section => section.title === 'Harness Engineering')?.items?.[0];
+    if (harness) {
+        insights.push(`工程重点：${compactText(harness.subtitle, 30)}`);
+    }
+
+    const opportunity = sections.find(section => section.title === '发现机会')?.items?.[0];
+    if (insights.length < 3 && opportunity) {
+        insights.push(`机会窗口：${compactText(opportunity.subtitle, 30)}`);
+    }
+
+    return insights.slice(0, 3);
+}
+
+function extractOpenSourceRankings(sectionMarkdown) {
+    const rows = String(sectionMarkdown || '')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => /^\|\s*\d+\s*\|/.test(line));
+
+    return rows.map(line => {
+        const cells = line.split('|').map(cell => cleanCardText(cell)).filter(Boolean);
+        const [rank, project, type, metric, reason, audience, risk] = cells;
+        if (!rank || !project || !reason) return null;
+
+        const title = `Top${rank} ${project}`;
+        const parts = [];
+        if (type) parts.push(type);
+        if (metric) parts.push(metric);
+        parts.push(reason);
+        if (audience) parts.push(`适合：${audience}`);
+        if (risk) parts.push(`风险：${risk}`);
+
+        return { subtitle: title, summary: parts.join('｜') };
+    }).filter(Boolean);
+}
+
+function localizeSignalTitle(title) {
+    const text = cleanCardText(title);
+    const lower = text.toLowerCase();
+
+    const known = [
+        [/fastgraphrag/, 'FastGraphRAG：RAG 检索优化'],
+        [/\baide\b.*ai native ide/, 'Aide：开源 AI 原生 IDE'],
+        [/deta surf/, 'Deta Surf：本地优先 Notebook'],
+        [/nocobase/, 'NocoBase：非 AI 工具逆势增长'],
+        [/国外的旗舰模型|旗舰模型到底强在哪里/, '旗舰模型差距：怎么向老板解释'],
+    ];
+    for (const [pattern, replacement] of known) {
+        if (pattern.test(lower) || pattern.test(text)) return replacement;
+    }
+
+    return text
+        .replace(/^show\s+hn:\s*/i, '')
+        .replace(/\ban open[-\s]source\b/ig, '开源')
+        .replace(/\bopen[-\s]source\b/ig, '开源')
+        .replace(/\blocal[-\s]first\b/ig, '本地优先')
+        .replace(/\bai native\b/ig, 'AI 原生')
+        .replace(/\bnotebook\b/ig, 'Notebook')
+        .replace(/\bide\b/ig, 'IDE')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 /**
  * 生成封面 HTML
  */
-function coverHtml(date, sectionCount, totalItems, theme = '今天 AI 圈最值得看的信号') {
+function coverHtml(date, sectionCount, totalItems, theme = '今天 AI 圈最值得看的信号', insights = []) {
     const dateLabel = date.substring(5).replace('-', '.');
+    const insightItems = (insights.length ? insights : ['先看 Top 5 判断方向', 'Open-source Radar 找可试项目', 'Harness Engineering 检查工程风险'])
+        .slice(0, 3)
+        .map((item, index) => `
+    <div class="insight-item">
+      <div class="insight-num">0${index + 1}</div>
+      <div class="insight-copy">${escHtml(item)}</div>
+    </div>`)
+        .join('\n');
     return `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
@@ -268,13 +370,20 @@ body {
 .title { font-size:116px; font-weight:1000; letter-spacing:0; line-height:.95; color:#101828; margin-bottom:18px; }
 .title-accent { color:#ff4d3d; }
 .date { font-size:42px; color:#475467; letter-spacing:2px; font-weight:800; margin-bottom:44px; }
-.hero-card { background:#fff; border:4px solid #101828; border-radius:8px; padding:36px 38px; box-shadow:12px 12px 0 #101828; margin-bottom:42px; }
+.hero-card { background:#fff; border:4px solid #101828; border-radius:8px; padding:34px 38px; box-shadow:12px 12px 0 #101828; margin-bottom:30px; }
 .hero-kicker { font-size:23px; color:#ff4d3d; font-weight:950; margin-bottom:14px; }
 .hero-title { font-size:43px; line-height:1.22; font-weight:1000; margin-bottom:18px; }
 .hero-copy { font-size:26px; color:#475467; line-height:1.5; font-weight:650; }
-.sections-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 22px; }
-.section-item { display:flex; align-items:center; gap:12px; background:#fff; border:2px solid #101828; border-radius:8px; padding:14px 16px; font-size:27px; font-weight:850; color:#101828; }
-.section-emoji { font-size:31px; }
+.insights { display:flex; flex-direction:column; gap:18px; }
+.insight-item {
+  display:grid; grid-template-columns:78px 1fr; align-items:start; gap:18px;
+  background:#fff; border:3px solid #101828; border-radius:8px; padding:22px 24px;
+}
+.insight-num {
+  color:#fff; background:#ff4d3d; border:3px solid #101828; border-radius:8px;
+  font-size:24px; font-weight:1000; text-align:center; padding:8px 0;
+}
+.insight-copy { font-size:30px; line-height:1.35; font-weight:950; color:#101828; }
 .footer { position:absolute; bottom:58px; left:72px; right:72px; display:flex; justify-content:space-between; align-items:flex-end; border-top:3px solid #101828; padding-top:22px; }
 .stats { font-size:24px; color:#101828; font-weight:850; }
 .credit { font-size:18px; color:#667085; text-align:right; }
@@ -289,16 +398,10 @@ body {
   <div class="hero-card">
     <div class="hero-kicker">今日主线</div>
     <div class="hero-title">${escHtml(theme)}</div>
-    <div class="hero-copy">先看 Top 5 判断方向，再翻板块卡找项目、工程抓手和机会窗口。</div>
+    <div class="hero-copy">这一页只放结论，后面再展开项目、工程和机会。</div>
   </div>
-  <div class="sections-grid">
-    <div class="section-item"><span class="section-emoji">🚀</span> 产品与功能更新</div>
-    <div class="section-item"><span class="section-emoji">🔬</span> 前沿研究</div>
-    <div class="section-item"><span class="section-emoji">🌍</span> 行业展望与社会影响</div>
-    <div class="section-item"><span class="section-emoji">⭐</span> Open-source Radar</div>
-    <div class="section-item"><span class="section-emoji">💬</span> 社区信号与反共识</div>
-    <div class="section-item"><span class="section-emoji">💻</span> Harness Engineering</div>
-    <div class="section-item"><span class="section-emoji">💡</span> 发现机会</div>
+  <div class="insights">
+    ${insightItems}
   </div>
 </div>
 <div class="footer">
@@ -369,6 +472,7 @@ function sectionCardHtml(page, date, globalIndex) {
         <span class="card-subtitle">${escHtml(item.subtitle)}</span>
       </div>
       <div class="label-row"><span>判断</span><p>${escHtml(item.summary)}</p></div>
+      <div class="label-row"><span>关注</span><p>${escHtml(SECTION_FOCUS[page.title] || '继续跟踪')}</p></div>
       <div class="label-row compact"><span>适合</span><p>${escHtml(SECTION_AUDIENCE[page.title] || '关注 AI 的读者')}</p></div>
     </div>`).join('\n');
 
@@ -393,10 +497,10 @@ body {
 }
 .content {
   position:relative; z-index:1;
-  padding:64px 60px;
+  padding:56px 58px;
 }
-.section-header { margin-bottom:30px; }
-.eyebrow { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; }
+.section-header { margin-bottom:22px; }
+.eyebrow { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
 .section-emoji { font-size:52px; display:block; }
 .section-meta {
   font-size:19px; color:#101828; background:#fff;
@@ -404,17 +508,17 @@ body {
   font-weight:850;
 }
 .section-title {
-  font-size:52px; font-weight:1000; line-height:1.12;
+  font-size:48px; font-weight:1000; line-height:1.12;
   color:#101828; letter-spacing:0;
 }
 .header-line {
   width:130px; height:8px; border-radius:999px;
   background:#ff4d3d; margin-top:18px;
 }
-.cards { display:flex; flex-direction:column; gap:18px; }
+.cards { display:flex; flex-direction:column; gap:14px; }
 .card {
   background:#fff; border:3px solid #101828;
-  border-radius:8px; padding:24px 26px;
+  border-radius:8px; padding:18px 22px;
   box-shadow:8px 8px 0 rgba(16,24,40,.12);
 }
 .card-header {
@@ -425,11 +529,15 @@ body {
   width:24px; height:24px; border-radius:50%;
   background:#ff4d3d; border:3px solid #101828; flex-shrink:0;
 }
-.card-subtitle { font-size:28px; line-height:1.25; font-weight:950; color:#101828; }
-.label-row { display:grid; grid-template-columns:68px 1fr; gap:12px; padding-left:34px; align-items:start; }
-.label-row + .label-row { margin-top:10px; }
-.label-row span { display:inline-block; color:#fff; background:#101828; border-radius:6px; padding:5px 8px; font-size:18px; line-height:1; font-weight:900; text-align:center; }
-.label-row p { font-size:22px; line-height:1.55; color:#475467; font-weight:650; }
+.card-subtitle { font-size:26px; line-height:1.24; font-weight:950; color:#101828; }
+.label-row { display:grid; grid-template-columns:70px 1fr; gap:12px; padding-left:34px; align-items:start; }
+.label-row + .label-row { margin-top:8px; }
+.label-row span {
+  display:flex; align-items:center; justify-content:center;
+  min-height:28px; color:#fff; background:#101828; border-radius:6px;
+  padding:4px 8px; font-size:18px; line-height:1; font-weight:900; text-align:center;
+}
+.label-row p { font-size:20px; line-height:1.42; color:#475467; font-weight:650; padding-top:1px; }
 .label-row.compact p { color:#101828; font-weight:850; }
 .footer {
   position:absolute; bottom:40px; left:60px; right:60px;
@@ -538,6 +646,7 @@ async function generateCoverAndCards(date, sectionsOrMarkdown, outputDir) {
     const theme = typeof sectionsOrMarkdown === 'string'
         ? deriveDailyTheme(sectionsOrMarkdown, sections, topSignals)
         : '今天 AI 圈最值得复盘的信号';
+    const coverInsights = deriveCoverInsights(sections, topSignals);
 
     // 所有板块分页
     const allPages = [];
@@ -590,7 +699,7 @@ async function generateCoverAndCards(date, sectionsOrMarkdown, outputDir) {
     try {
         // 封面
         const coverPath = path.join(outputDir, 'xhs_0_cover.png');
-        await page.setContent(coverHtml(date, sections.length, totalItems, theme), { waitUntil: 'load', timeout: 15000 });
+        await page.setContent(coverHtml(date, sections.length, totalItems, theme, coverInsights), { waitUntil: 'load', timeout: 15000 });
         await page.screenshot({ path: coverPath, type: 'png', clip: { x: 0, y: 0, width: CARD_WIDTH, height: CARD_HEIGHT } });
         paths.push(coverPath);
         console.log(`  ✓ 封面图`);
@@ -645,16 +754,18 @@ function escHtml(str) {
 }
 
 function cleanCardText(str) {
-    return String(str || '')
+    return tidyCardText(String(str || '')
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
         .replace(/show\s+hn:\s*/ig, '')
         .replace(/\*\*/g, '')
         .replace(/`/g, '')
+        .replace(/\|/g, '｜')
+        .replace(/<\/?[^>]+>/g, '')
         .replace(/^(分析思路与推演链条|分析推演链条|分析思路|推演链条)[：:]\s*/i, '')
         .replace(/^核心判断(?:（证据强度[：:][强中弱]）)?[：:]\s*/i, '')
         .replace(/^(实战建议|反向视角|不确定性)[：:]\s*/i, '')
         .replace(/\s+/g, ' ')
-        .trim();
+        .trim());
 }
 
 function extractCoreSummary(body) {
@@ -689,6 +800,28 @@ function compactText(text, maxLen) {
     const cut = cleaned.substring(0, maxLen);
     const lastPunc = Math.max(cut.lastIndexOf('，'), cut.lastIndexOf('、'), cut.lastIndexOf('：'));
     return (lastPunc > 12 ? cut.substring(0, lastPunc) : cut).replace(/[，、：\s]+$/, '') + '…';
+}
+
+function tidyCardText(text) {
+    return String(text || '')
+        .replace(/\s+([，。！？；：])/g, '$1')
+        .replace(/([。！？；：])[-–—]+$/g, '$1')
+        .replace(/[-–—]+$/g, '')
+        .replace(/[，、；：｜/\s]+$/g, '')
+        .trim();
+}
+
+function similarItem(a, b) {
+    const left = normalizeCompareText(a);
+    const right = normalizeCompareText(b);
+    return left && right && (left.includes(right) || right.includes(left));
+}
+
+function normalizeCompareText(text) {
+    return String(text || '')
+        .replace(/[^\p{Letter}\p{Number}\u4e00-\u9fa5]+/gu, '')
+        .toLowerCase()
+        .slice(0, 24);
 }
 
 function resolveChromeExecutable(puppeteer) {
