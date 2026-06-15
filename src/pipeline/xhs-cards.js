@@ -25,7 +25,9 @@ function parseFullSections(markdown) {
         '前沿研究': '🔬',
         '行业展望与社会影响': '🌍',
         '开源 TOP 项目': '⭐',
+        'Open-source Radar': '⭐',
         '社媒热议': '💬',
+        '社区信号与反共识': '💬',
         '社媒分享': '💬',
         'Harness Engineering': '💻',
         'AI Coding & 工程': '💻',
@@ -58,10 +60,12 @@ function parseFullSections(markdown) {
             '本地推理': '前沿研究',
             '行业展望': '行业展望与社会影响',
             '社会影响': '行业展望与社会影响',
-            '开源 TOP': '开源 TOP 项目',
-            '开源TOP': '开源 TOP 项目',
-            '安卓化': '开源 TOP 项目',
-            '社媒': '社媒热议',
+            'Open-source': 'Open-source Radar',
+            '开源 TOP': 'Open-source Radar',
+            '开源TOP': 'Open-source Radar',
+            '安卓化': 'Open-source Radar',
+            '社媒': '社区信号与反共识',
+            '社区信号': '社区信号与反共识',
             'Coding': 'Harness Engineering',
             'coding': 'Harness Engineering',
             'harness': 'Harness Engineering',
@@ -73,9 +77,12 @@ function parseFullSections(markdown) {
             if (sectionTitle.includes(key)) { normalizedTitle = val; break; }
         }
         // 如果自身已是标准板块名就不变
-        const standardNames = ['产品与功能更新', '前沿研究', '行业展望与社会影响', '开源 TOP 项目', '社媒热议', 'Harness Engineering', 'AI Coding & 工程', 'AI Coding & harness 工程', '发现机会'];
+        const standardNames = ['产品与功能更新', '前沿研究', '行业展望与社会影响', 'Open-source Radar', '开源 TOP 项目', '社媒热议', '社区信号与反共识', 'Harness Engineering', 'AI Coding & 工程', 'AI Coding & harness 工程', '发现机会'];
         if (standardNames.includes(sectionTitle)) {
-            normalizedTitle = sectionTitle.includes('AI Coding') ? 'Harness Engineering' : sectionTitle;
+            normalizedTitle = sectionTitle.includes('AI Coding') ? 'Harness Engineering'
+                : sectionTitle === '开源 TOP 项目' ? 'Open-source Radar'
+                    : sectionTitle === '社媒热议' ? '社区信号与反共识'
+                        : sectionTitle;
         }
         if (!normalizedTitle) {
             // 无法归类的分析标题跳过（内容会被前面的板块捕获）
@@ -238,8 +245,8 @@ body {
     <div class="section-item"><span class="section-emoji">🚀</span> 产品与功能更新</div>
     <div class="section-item"><span class="section-emoji">🔬</span> 前沿研究</div>
     <div class="section-item"><span class="section-emoji">🌍</span> 行业展望与社会影响</div>
-    <div class="section-item"><span class="section-emoji">⭐</span> 开源 TOP 项目</div>
-    <div class="section-item"><span class="section-emoji">💬</span> 社媒热议</div>
+    <div class="section-item"><span class="section-emoji">⭐</span> Open-source Radar</div>
+    <div class="section-item"><span class="section-emoji">💬</span> 社区信号与反共识</div>
     <div class="section-item"><span class="section-emoji">💻</span> Harness Engineering</div>
     <div class="section-item"><span class="section-emoji">💡</span> 发现机会</div>
   </div>
@@ -447,8 +454,8 @@ function getDefaultSections() {
         { emoji: '🚀', title: '产品与功能更新', items: [{ subtitle: '详见完整日报', summary: '' }] },
         { emoji: '🔬', title: '前沿研究', items: [{ subtitle: '详见完整日报', summary: '' }] },
         { emoji: '🌍', title: '行业展望与社会影响', items: [{ subtitle: '详见完整日报', summary: '' }] },
-        { emoji: '⭐', title: '开源TOP项目', items: [{ subtitle: '详见完整日报', summary: '' }] },
-        { emoji: '💬', title: '社媒热议', items: [{ subtitle: '详见完整日报', summary: '' }] },
+        { emoji: '⭐', title: 'Open-source Radar', items: [{ subtitle: '详见完整日报', summary: '' }] },
+        { emoji: '💬', title: '社区信号与反共识', items: [{ subtitle: '详见完整日报', summary: '' }] },
         { emoji: '💻', title: 'Harness Engineering', items: [{ subtitle: '详见完整日报', summary: '' }] },
         { emoji: '💡', title: '发现机会', items: [{ subtitle: '详见完整日报', summary: '' }] },
     ];

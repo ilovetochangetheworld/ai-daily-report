@@ -172,37 +172,47 @@ function generateDimensions(classified) {
         {
             id: 'product', name: '产品与功能更新', nameEn: 'Product & Feature Updates',
             icon: '🚀',
-            systemHint: '聚焦：新模型发布、产品迭代、API更新、定价策略变化。'
+            systemHint: '聚焦：新模型发布、产品迭代、API更新、定价策略变化。',
+            outputHint: '输出时按「变化是什么 / 为什么重要 / 谁该行动 / 下一步观察」组织，不要只复述发布新闻。'
         },
         {
             id: 'research', name: '前沿研究', nameEn: 'Frontier Research',
             icon: '🔬',
-            systemHint: '聚焦：最新论文、算法突破、训练方法创新、评测基准更新。'
+            systemHint: '聚焦：最新论文、算法突破、训练方法创新、评测基准更新。',
+            outputHint: '输出时按「研究问题 / 方法突破 / 工程成熟度 / 可能应用」组织，区分论文亮点和可落地程度。'
         },
         {
             id: 'industry', name: '行业展望与社会影响', nameEn: 'Industry Outlook & Social Impact',
             icon: '🌍',
-            systemHint: '聚焦：融资/并购/IPO、政策法规、伦理争议、就业影响。'
+            systemHint: '聚焦：融资/并购/IPO、政策法规、伦理争议、就业影响。',
+            outputHint: '输出时按「资本/监管/就业/商业化」拆解，明确受影响的公司、岗位或产业链位置。'
         },
         {
-            id: 'opensource', name: '开源 TOP 项目', nameEn: 'Open Source Top Projects',
+            id: 'opensource', name: 'Open-source Radar', nameEn: 'Open-source Radar',
             icon: '⭐',
-            systemHint: '聚焦：GitHub热门新项目、重大版本发布、社区动态。'
+            systemHint: '聚焦：GitHub热门新项目、重大版本发布、社区动态。',
+            outputHint: `必须先输出「### 今日 TOP 5 排名表」。
+表格列必须为：排名｜项目｜类型｜关键指标｜上榜理由｜适合谁｜风险。
+排序规则：综合动量（今日 stars/近期更新）、规模（总 stars/forks/downloads）、相关性（Agent/LLM/RAG/Harness）、成熟度（release/commit/issue/文档）、可信度（多源交叉提及）。
+表格后再输出 1-2 个趋势判断。不要把普通项目新闻写成 TOP。`
         },
         {
-            id: 'social', name: '社媒热议', nameEn: 'Social Media Highlights',
+            id: 'social', name: '社区信号与反共识', nameEn: 'Community Signals',
             icon: '💬',
-            systemHint: '聚焦：大V言论、社区热议、观点碰撞。'
+            systemHint: '聚焦：大V言论、社区热议、观点碰撞。',
+            outputHint: '输出时区分「真实需求信号」和「情绪噪音」。优先提炼反共识、开发者痛点、用户采用阻力。'
         },
         {
             id: 'coding', name: 'Harness Engineering', nameEn: 'Harness Engineering',
             icon: '💻',
-            systemHint: '聚焦：Agent harness、工具调用协议、沙箱与权限、评测与回放、CLI/IDE Agent 工作流、开发者工程化实践。'
+            systemHint: '聚焦：Agent harness、工具调用协议、沙箱与权限、评测与回放、CLI/IDE Agent 工作流、开发者工程化实践。',
+            outputHint: '输出时按「工程瓶颈 / 解决方案 / 对开发团队的流程影响 / 安全与可靠性风险」组织。'
         },
         {
             id: 'discovery', name: '发现机会', nameEn: 'Opportunity Discovery',
             icon: '💡',
-            systemHint: '聚焦：新应用场景、市场空白、创业方向、商业模式。'
+            systemHint: '聚焦：新应用场景、市场空白、创业方向、商业模式。',
+            outputHint: '输出时必须包含「机会窗口」「目标用户」「为什么现在」「验证方式」「主要风险」，避免空泛创业建议。'
         },
     ];
     return dims.map(d => ({ ...d, signals: classified[d.id] || [] }));
@@ -233,6 +243,7 @@ async function runExpertAnalysis(dimensions, date) {
 
 async function analyzeAsExpert(dimension, date) {
     const systemPrompt = `你是「${dimension.name}」维度的资深分析师。\\n${dimension.systemHint}
+${dimension.outputHint ? `\n本板块额外要求：\n${dimension.outputHint}` : ''}
 
 输出规范：
 - 使用 Markdown 格式
@@ -252,14 +263,14 @@ async function analyzeAsExpert(dimension, date) {
 
     const signalsText = dimension.signals.length > 0
         ? dimension.signals.map(s => {
-            let line = `- **${s.title}** (${s.source}) [来源](${s.url})\n  ${s.summary || '无摘要'}`;
+            let line = `- **${s.title}** (${s.source}) [来源](${s.url})\n  ${s.summary || '无摘要'}${formatSignalMetadata(s)}`;
             return line;
         }).join('\n\n')
         : '（今日该维度暂无显著信号，请根据其他维度的关联趋势进行推测性分析）';
 
     try {
         const markdown = await callLLM(systemPrompt,
-            `请分析以下与「${dimension.name}」相关的 ${dimension.signals.length} 条信号（日期：${date}）：\n\n${signalsText}\n\n生成 2-3 个分析点。优先找“共同指向的主线”，不要平均分配篇幅。${dimension.signals.length === 0 ? '由于该维度无直接信号，只能给弱证据前瞻；必须明确标注证据强度为弱，并说明不确定性。' : ''}`,
+            `请分析以下与「${dimension.name}」相关的 ${dimension.signals.length} 条信号（日期：${date}）：\n\n${signalsText}\n\n${dimension.id === 'opensource' ? '先输出 TOP 5 排名表，再输出趋势分析。' : '生成 2-3 个分析点。'}优先找“共同指向的主线”，不要平均分配篇幅。${dimension.signals.length === 0 ? '由于该维度无直接信号，只能给弱证据前瞻；必须明确标注证据强度为弱，并说明不确定性。' : ''}`,
             { maxTokens: STEP_TOKENS.expertAnalysis }
         );
         return { dimension: dimension.id, name: dimension.name, nameEn: dimension.nameEn, icon: dimension.icon, markdown };
@@ -270,6 +281,22 @@ async function analyzeAsExpert(dimension, date) {
             markdown: `### 分析暂时不可用\n${error.message}`
         };
     }
+}
+
+function formatSignalMetadata(signal) {
+    const md = signal.metadata || {};
+    const parts = [];
+    if (md.stars_today) parts.push(`今日 stars: ${md.stars_today}`);
+    if (md.stargazers_count) parts.push(`总 stars: ${md.stargazers_count}`);
+    if (md.forks_count) parts.push(`forks: ${md.forks_count}`);
+    if (md.open_issues_count) parts.push(`issues: ${md.open_issues_count}`);
+    if (md.downloads) parts.push(`downloads: ${md.downloads}`);
+    if (md.likes) parts.push(`likes: ${md.likes}`);
+    if (md.pushed_at) parts.push(`最近 push: ${md.pushed_at}`);
+    if (md.license) parts.push(`license: ${md.license}`);
+    if (md.pipeline_tag) parts.push(`pipeline: ${md.pipeline_tag}`);
+    if (md.discovery) parts.push(`发现方式: ${md.discovery}`);
+    return parts.length ? `\n  指标：${parts.join('；')}` : '';
 }
 
 /**
@@ -367,8 +394,8 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
 ## 🚀 产品与功能更新
 ## 🔬 前沿研究
 ## 🌍 行业展望与社会影响
-## ⭐ 开源 TOP 项目
-## 💬 社媒热议
+## ⭐ Open-source Radar
+## 💬 社区信号与反共识
 ## 💻 Harness Engineering
 ## 💡 发现机会
 
@@ -379,14 +406,15 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
 
 ⚠️ 严格规则：
 1. **所有7个板块必须全部输出**
-2. 每个板块2-4条内容
-3. **每条资讯必须附带原始来源链接**
-4. 开源项目必须附链接
-5. 每个板块开头保留或重写一句「本板块主线」，让整篇像主编选题，不像逐条摘要
-6. 保留「证据强度：强/中/弱」；弱证据判断不得写成确定结论
-7. 语言专业克制、重点关键词加粗
-8. 分析要有思路——怎么得出判断的，推演链条是什么；不要凑「反向视角」「实战建议」等模板骨架
-9. 整合专家洞察，不是复制粘贴`
+2. 正文前必须输出「## 🧭 今日决策摘要」，包含 3-5 条可行动判断
+3. 每个板块2-4条内容
+4. **每条资讯必须附带原始来源链接**
+5. Open-source Radar 必须保留 TOP 5 排名表，项目必须附链接和指标
+6. 每个板块开头保留或重写一句「本板块主线」，让整篇像主编选题，不像逐条摘要
+7. 保留「证据强度：强/中/弱」；弱证据判断不得写成确定结论
+8. 语言专业克制、重点关键词加粗
+9. 分析要有思路——怎么得出判断的，推演链条是什么；不要凑「反向视角」「实战建议」等模板骨架
+10. 整合专家洞察，不是复制粘贴`
         : `You are an AI daily report editor. Generate a structured daily report (English). Same 7-section structure. Same strict rules.`;
 
     const expertText = expertAnalyses.map(ea =>
@@ -405,7 +433,7 @@ async function generateReportByLLM(lang, date, classified, expertAnalyses, headl
     }).join('\n');
 
     const userPrompt = isZh
-        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键：\n1. 必须输出全部7个板块\n2. 每个板块先给一句「本板块主线」，再给具体分析点\n3. 如果某板块信号不足，请基于行业趋势补充前瞻性分析，但必须标注证据强度为弱\n4. 每条资讯必须有[来源](URL)链接\n5. 保留或重写「证据强度：强/中/弱」\n6. 分析要有推演思路，不要凑模板骨架\n7. 站在主编视角重组主线，不要机械拼接专家原文`
+        ? `请生成 ${date} 的 AI 资讯日报（中文版）。\n\n**Top 5 信号：**\n${topSignalsText}\n\n**专家分析：**\n${expertText}\n\n请生成完整的日报 Markdown。头条摘要为：「${headline}」\n\n⚠️ 关键：\n1. 必须输出「今日决策摘要」和全部7个板块\n2. 每个板块先给一句「本板块主线」，再给具体分析点\n3. Open-source Radar 必须保留 TOP 5 排名表\n4. 如果某板块信号不足，请基于行业趋势补充前瞻性分析，但必须标注证据强度为弱\n5. 每条资讯必须有[来源](URL)链接\n6. 保留或重写「证据强度：强/中/弱」\n7. 分析要有推演思路，不要凑模板骨架\n8. 站在主编视角重组主线，不要机械拼接专家原文`
         : `Generate the AI Daily Report for ${date} (English). Same rules.`;
 
     const { markdown } = await generateReportByTemplate(lang, date, classified, expertAnalyses, headline, allSignals);
@@ -442,6 +470,8 @@ async function generateReportByTemplate(lang, date, classified, expertAnalyses, 
 
     let markdown = `# AI 资讯日报 ${date}\n\n> 📰 ${headline}\n\n---\n\n`;
 
+    markdown += generateExecutiveBrief(headline, classified, allSignals);
+
     // Top 5 信号摘要
     // 优先展示真实新闻来源，GitHub/HuggingFace 项目不占 Top 5 名额
     const allSorted = Object.values(classified).flat()
@@ -455,7 +485,7 @@ async function generateReportByTemplate(lang, date, classified, expertAnalyses, 
     if (topSignals.length > 0) {
         markdown += `## 📌 今日 Top 5 信号\n\n`;
         for (const s of topSignals) {
-            markdown += `- **${s.title}** [${s.source}](${s.url})\n`;
+            markdown += `- **${s.title}** [${s.source}](${s.url})${formatSignalMetadataInline(s)}\n`;
         }
         markdown += `\n---\n\n`;
     }
@@ -471,6 +501,39 @@ async function generateReportByTemplate(lang, date, classified, expertAnalyses, 
     markdown += `*报告生成时间：${date}*\n\n*数据来源：${sources.join('、')}*\n`;
 
     return { markdown };
+}
+
+function generateExecutiveBrief(headline, classified, allSignals) {
+    const counts = {
+        product: classified.product?.length || 0,
+        research: classified.research?.length || 0,
+        opensource: classified.opensource?.length || 0,
+        coding: classified.coding?.length || 0,
+        industry: classified.industry?.length || 0,
+        social: classified.social?.length || 0,
+    };
+    const topSource = [...new Set(allSignals.map(s => s.source).filter(Boolean))].slice(0, 6).join('、');
+
+    return `## 🧭 今日决策摘要
+
+- **今日主线**：${headline.replace(/\s+—\s*AI日报.*$/, '')}
+- **读者优先级**：先看「📌 Top 5 信号」判断方向，再看「⭐ Open-source Radar」找可试用项目，最后看「💻 Harness Engineering」评估工程落地。
+- **信号分布**：产品 ${counts.product} 条、研究 ${counts.research} 条、开源 ${counts.opensource} 条、Harness ${counts.coding} 条、行业 ${counts.industry} 条、社区 ${counts.social} 条。
+- **主要来源**：${topSource || '多源聚合'}。
+
+---
+
+`;
+}
+
+function formatSignalMetadataInline(signal) {
+    const md = signal.metadata || {};
+    const bits = [];
+    if (md.stars_today) bits.push(`今日 stars ${md.stars_today}`);
+    if (md.stargazers_count) bits.push(`总 stars ${md.stargazers_count}`);
+    if (md.forks_count) bits.push(`forks ${md.forks_count}`);
+    if (md.downloads) bits.push(`downloads ${md.downloads}`);
+    return bits.length ? ` · ${bits.join(' / ')}` : '';
 }
 
 module.exports = { runPipeline };

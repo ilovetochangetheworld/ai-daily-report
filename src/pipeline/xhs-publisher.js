@@ -15,7 +15,9 @@ const SECTION_EMOJIS = {
     '前沿研究': '🔬',
     '行业展望与社会影响': '🌍',
     '开源 TOP 项目': '⭐',
+    'Open-source Radar': '⭐',
     '社媒热议': '💬',
+    '社区信号与反共识': '💬',
     'Harness Engineering': '💻',
     'AI Coding & 工程': '💻',
     'AI Coding & harness 工程': '💻',
@@ -82,7 +84,7 @@ function generateXhsContent(fullMarkdown, date) {
     const reportLink = `ilovetochangetheworld.github.io/ai-daily-report/zh/${datePath}.html`;
 
     content += '━━━━━━━━━━━━━━━━\n\n';
-    content += '📌 卡片覆盖完整板块：产品、研究、行业、开源、社媒、Harness Engineering、机会。\n';
+    content += '📌 卡片覆盖完整板块：产品、研究、行业、Open-source Radar、社区信号、Harness Engineering、机会。\n';
     content += `🔗 完整日报：${reportLink}\n`;
 
     // 统计数据
