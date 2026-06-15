@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '0 1 * * *'
   workflow_dispatch:
+    inputs:
+      force_xhs_publish:
+        description: 'Force publish Xiaohongshu even if today already has a note'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 permissions:
   contents: write
@@ -87,6 +96,7 @@ jobs:
           TWITTER_CT0: ${{ secrets.TWITTER_CT0 }}
           XHS_A1: ${{ secrets.XHS_A1 }}
           XHS_WEB_SESSION: ${{ secrets.XHS_WEB_SESSION }}
+          XHS_FORCE_PUBLISH: ${{ inputs.force_xhs_publish || 'false' }}
         run: npm start
 
       - name: 📊 Generate index pages

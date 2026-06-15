@@ -80,10 +80,14 @@ async function publishToXhs({ date, fullMarkdown, signals }) {
     console.log('\n📕 小红书发布流程...');
 
     // 0. 防重发：检查当天是否已发布过同日期的笔记
-    const alreadyPublished = await checkTodayPublished(date);
-    if (alreadyPublished) {
-        console.log(`  ⚠ 今日(${date})小红书笔记已存在，跳过发布（防重复）`);
-        return null;
+    if (process.env.XHS_FORCE_PUBLISH === 'true') {
+        console.log(`  ⚠ 已启用 XHS_FORCE_PUBLISH=true，将跳过防重复检查并重新发布`);
+    } else {
+        const alreadyPublished = await checkTodayPublished(date);
+        if (alreadyPublished) {
+            console.log(`  ⚠ 今日(${date})小红书笔记已存在，跳过发布（防重复）`);
+            return null;
+        }
     }
 
     // 1. 生成小红书版内容（优先平台化文案，失败则模板兜底）
