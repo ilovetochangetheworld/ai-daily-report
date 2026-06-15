@@ -42,9 +42,9 @@ class HuggingFaceFetcher extends BaseFetcher {
                     title: model.id,
                     url: `https://huggingface.co/${model.id}`,
                     source: 'huggingface',
-                    category: 'project',
+                    category: 'opensource',
                     published_date: model.lastModified || new Date().toISOString(),
-                    score: Math.min(model.likes || 0, 50),
+                    score: this.scoreHubItem(model, 'model'),
                     summary: model.cardData?.summary || model.description || '',
                     metadata: {
                         type: 'model',
@@ -81,9 +81,9 @@ class HuggingFaceFetcher extends BaseFetcher {
                     title: dataset.id,
                     url: `https://huggingface.co/datasets/${dataset.id}`,
                     source: 'huggingface',
-                    category: 'paper',
+                    category: 'opensource',
                     published_date: dataset.lastModified || new Date().toISOString(),
-                    score: Math.min(dataset.likes || 0, 50),
+                    score: this.scoreHubItem(dataset, 'dataset'),
                     summary: dataset.description || '',
                     metadata: {
                         type: 'dataset',
@@ -99,6 +99,27 @@ class HuggingFaceFetcher extends BaseFetcher {
         }
 
         return signals;
+    }
+
+    scoreHubItem(item, type) {
+        const likes = item.likes || 0;
+        const downloads = item.downloads || 0;
+        const lastModified = item.lastModified ? new Date(item.lastModified) : new Date(0);
+        const daysSinceUpdate = (Date.now() - lastModified.getTime()) / (1000 * 60 * 60 * 24);
+        const tags = (item.tags || []).join(' ').toLowerCase();
+
+        let score = type === 'model' ? 42 : 36;
+        score += Math.min(Math.log10(Math.max(likes, 1)) * 10, 24);
+        score += Math.min(Math.log10(Math.max(downloads, 1)) * 6, 20);
+        score += daysSinceUpdate <= 2 ? 12 : daysSinceUpdate <= 7 ? 6 : 0;
+        if (/(text-generation|image-text-to-text|agents|conversational|reinforcement-learning)/i.test(`${item.pipeline_tag || ''} ${tags}`)) {
+            score += 6;
+        }
+        if (/(eval|benchmark|dataset|preference|reasoning|agent|tool)/i.test(tags)) {
+            score += 4;
+        }
+
+        return Math.max(10, Math.min(Math.round(score), 90));
     }
 }
 

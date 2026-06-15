@@ -15,19 +15,21 @@ const { BaseFetcher } = require('./base');
 
 // 搜索查询
 const SEARCH_QUERIES = [
-    { q: 'AI breakthroughs new model releases', lang: 'en' },
-    { q: 'AI startup funding acquisitions', lang: 'en' },
-    { q: 'open source AI projects trending', lang: 'en' },
-    { q: 'agent harness engineering AI coding tools updates', lang: 'en' },
-    { q: '大模型 AI发布 融资', lang: 'zh' },
+    { q: 'frontier AI model release OpenAI Anthropic Google DeepMind', lang: 'en', category: 'product' },
+    { q: 'AI agents tool use computer use model context protocol MCP', lang: 'en', category: 'coding' },
+    { q: 'agent harness engineering evaluation sandbox CLI IDE agents', lang: 'en', category: 'coding' },
+    { q: 'open source AI agent LLM inference RAG GitHub trending', lang: 'en', category: 'opensource' },
+    { q: 'AI startup funding acquisition enterprise agents infrastructure', lang: 'en', category: 'industry' },
+    { q: '大模型 AI 发布 融资 智能体 开源', lang: 'zh', category: 'news' },
 ];
 
 const GOOGLE_NEWS_RSS_QUERIES = [
     'artificial intelligence AI breakthroughs',
     'OpenAI Anthropic Google DeepMind',
     'LLM GPT Claude Gemini new release',
+    'AI agents MCP tool use computer use',
+    'open source AI agents GitHub',
     'AI startup funding acquisition',
-    'open source AI model GitHub',
 ];
 
 class ExaSearchFetcher extends BaseFetcher {
@@ -81,10 +83,14 @@ class ExaSearchFetcher extends BaseFetcher {
                         title: item.title.slice(0, 120),
                         url: item.url,
                         source: item.author || this.extractSource(item.url),
-                        category: 'news',
+                        category: query.category || 'news',
                         published_date: item.publishedDate || new Date().toISOString(),
-                        score: item.score ? Math.round(item.score * 100) : 50,
+                        score: this.scoreSearchResult(item, query),
                         summary: (item.text || '').slice(0, 300),
+                        metadata: {
+                            search_query: query.q,
+                            search_lang: query.lang,
+                        },
                     });
                 }
             } catch (error) {
@@ -103,10 +109,13 @@ class ExaSearchFetcher extends BaseFetcher {
         const signals = [];
 
         const feeds = [
-            { query: GOOGLE_NEWS_RSS_QUERIES[0], hl: 'en', gl: 'US', ceid: 'US:en' },
-            { query: GOOGLE_NEWS_RSS_QUERIES[1], hl: 'en', gl: 'US', ceid: 'US:en' },
-            { query: GOOGLE_NEWS_RSS_QUERIES[2], hl: 'en', gl: 'US', ceid: 'US:en' },
-            { query: '人工智能 大模型 最新', hl: 'zh-CN', gl: 'CN', ceid: 'CN:zh-Hans' },
+            { query: GOOGLE_NEWS_RSS_QUERIES[0], hl: 'en', gl: 'US', ceid: 'US:en', category: 'news' },
+            { query: GOOGLE_NEWS_RSS_QUERIES[1], hl: 'en', gl: 'US', ceid: 'US:en', category: 'product' },
+            { query: GOOGLE_NEWS_RSS_QUERIES[2], hl: 'en', gl: 'US', ceid: 'US:en', category: 'product' },
+            { query: GOOGLE_NEWS_RSS_QUERIES[3], hl: 'en', gl: 'US', ceid: 'US:en', category: 'coding' },
+            { query: GOOGLE_NEWS_RSS_QUERIES[4], hl: 'en', gl: 'US', ceid: 'US:en', category: 'opensource' },
+            { query: GOOGLE_NEWS_RSS_QUERIES[5], hl: 'en', gl: 'US', ceid: 'US:en', category: 'industry' },
+            { query: '人工智能 大模型 最新 智能体 开源', hl: 'zh-CN', gl: 'CN', ceid: 'CN:zh-Hans', category: 'news' },
         ];
 
         for (const feed of feeds) {
@@ -134,10 +143,14 @@ class ExaSearchFetcher extends BaseFetcher {
                         title: (item.title || '').slice(0, 120),
                         url: realUrl,
                         source: item.author || this.extractSource(realUrl) || 'Google News',
-                        category: 'news',
+                        category: feed.category || 'news',
                         published_date: pubDate.toISOString(),
-                        score: 48,
+                        score: this.scoreNewsResult(item.title || '', item.description || item.summary || '', feed.query),
                         summary: (item.description || item.summary || '').replace(/<[^>]*>/g, '').slice(0, 300),
+                        metadata: {
+                            search_query: feed.query,
+                            source_tier: 'news_search',
+                        },
                     });
                 }
             } catch (error) {
@@ -195,6 +208,25 @@ class ExaSearchFetcher extends BaseFetcher {
         } catch {
             return 'web';
         }
+    }
+
+    scoreSearchResult(item, query) {
+        let score = item.score ? Math.round(item.score * 100) : 50;
+        if (query.category === 'product') score += 8;
+        if (query.category === 'coding' || query.category === 'opensource') score += 5;
+        const text = `${item.title || ''} ${item.text || ''}`.toLowerCase();
+        if (/(openai|anthropic|deepmind|google|microsoft|nvidia|hugging face)/i.test(text)) score += 6;
+        if (/(agent|harness|mcp|tool use|eval|benchmark|inference|rag)/i.test(text)) score += 6;
+        return Math.max(10, Math.min(score, 90));
+    }
+
+    scoreNewsResult(title, summary, query) {
+        let score = 48;
+        const text = `${title} ${summary} ${query}`.toLowerCase();
+        if (/(openai|anthropic|deepmind|google|microsoft|nvidia|hugging face)/i.test(text)) score += 8;
+        if (/(launch|release|funding|acquisition|policy|发布|融资|收购)/i.test(text)) score += 5;
+        if (/(agent|harness|mcp|tool use|eval|benchmark|inference|rag)/i.test(text)) score += 5;
+        return Math.max(10, Math.min(score, 82));
     }
 
     parseFeed(xmlContent) {

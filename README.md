@@ -21,14 +21,15 @@
 | 来源 | 类型 | 栏目覆盖 |
 |------|------|---------|
 | Hacker News | 社区讨论 | 全部 |
-| GitHub Trending | 开源项目 | 开源TOP、Harness Engineering |
+| GitHub Trending + GitHub Search | 开源项目 | 开源TOP、Harness Engineering |
 | Product Hunt | 产品发布 | 产品更新、发现机会 |
 | Reddit (r/LocalLLaMA, r/MachineLearning) | 社区讨论 | 前沿研究、社媒分享 |
 | Hugging Face | 模型/数据集 | 前沿研究、开源TOP |
 | V2EX | 中文社区 | 社媒分享、发现机会 |
-| Google Trends | 搜索趋势 | 行业展望、趋势判断 |
-| 机器之心 | 中文AI资讯 | 产品更新、前沿研究 |
-| 新智元 | 中文AI资讯 | 行业展望、社媒分享 |
+| OpenAI / Google AI / Hugging Face Blog | 一手来源 | 产品更新、前沿研究、开源TOP |
+| MIT Tech Review / TechCrunch / The Verge / The Decoder / NVIDIA Blog | 行业媒体 | 产品更新、行业展望、趋势判断 |
+| 量子位 / 36kr / 少数派 | 中文资讯 | 产品更新、行业展望、社媒分享 |
+| Google News RSS / Exa Search | 搜索聚合 | 全部 |
 | GitHub Releases | 版本发布 | Harness Engineering、开源TOP |
 
 ## 在线访问
@@ -62,6 +63,8 @@ cp .env.example .env
 可选：
 - `OPENAI_BASE_URL`: API 地址
 - `OPENAI_MODEL`: 模型名称
+- `EXA_API_KEY`: Exa 语义搜索 API Key，未设置时自动降级到 Google News RSS
+- `GITHUB_TOKEN`: GitHub API Token，用于提升开源项目搜索和元数据补全稳定性
 
 ### 4. 本地运行
 
