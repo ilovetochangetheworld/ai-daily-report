@@ -64,7 +64,7 @@ cp .env.example .env
 - `OPENAI_BASE_URL`: API 地址
 - `OPENAI_MODEL`: 模型名称
 - `EXA_API_KEY`: Exa 语义搜索 API Key，未设置时自动降级到 Google News RSS
-- `GITHUB_TOKEN`: GitHub API Token，用于提升开源项目搜索和元数据补全稳定性
+- `GH_TOKEN` 或 `AI_DAILY_GITHUB_TOKEN`: 可选 GitHub API Token，用于提升开源项目搜索和元数据补全稳定性。GitHub Actions 默认会自动使用内置 `github.token`，通常无需额外配置。
 
 ### 4. 本地运行
 

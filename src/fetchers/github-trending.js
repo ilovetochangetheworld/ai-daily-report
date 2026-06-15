@@ -16,6 +16,10 @@ const SEARCH_QUERIES = [
     'agent harness stars:>20 pushed:>={date}',
 ];
 
+function getGitHubToken() {
+    return process.env.GH_TOKEN || process.env.AI_DAILY_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
+}
+
 class GitHubTrendingFetcher extends BaseFetcher {
     constructor() {
         super('GitHub Trending');
@@ -32,7 +36,7 @@ class GitHubTrendingFetcher extends BaseFetcher {
             headers: {
                 'User-Agent': 'AIDailyReport/1.0',
                 'Accept': 'application/vnd.github+json',
-                ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
+                ...(getGitHubToken() ? { Authorization: `Bearer ${getGitHubToken()}` } : {}),
             },
         });
     }
