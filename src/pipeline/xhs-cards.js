@@ -12,6 +12,15 @@ const CARD_WIDTH = 1080;
 const CARD_HEIGHT = 1440;
 const FONT_STACK = "'Noto Sans CJK SC','PingFang SC','Microsoft YaHei','WenQuanYi Micro Hei',sans-serif";
 const BRAND_URL = 'ilovetochangetheworld.github.io/ai-daily-report';
+const SECTION_AUDIENCE = {
+    '产品与功能更新': '产品/增长',
+    '前沿研究': '研究/模型',
+    '行业展望与社会影响': '投资/战略',
+    'Open-source Radar': '开发者',
+    '社区信号与反共识': '选题/社群',
+    'Harness Engineering': '工程团队',
+    '发现机会': '创业/独立开发',
+};
 
 /**
  * 从日报 Markdown 解析出 7 板块的所有条目
@@ -196,10 +205,49 @@ function paginateSection(section, maxItemsPerPage = 3) {
     return pages;
 }
 
+function extractTopSignals(markdown) {
+    const match = String(markdown || '').match(/^##\s+📌\s*今日 Top 5 信号\s*\n([\s\S]*?)(?=^---\s*$|^##\s+)/m);
+    if (!match) return [];
+
+    return match[1]
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.startsWith('- '))
+        .map((line, index) => {
+            const titleMatch = line.match(/^\-\s+\*\*(.+?)\*\*/);
+            const linkMatch = line.match(/\[([^\]]+)\]\(([^)]+)\)\s*$/);
+            return {
+                rank: index + 1,
+                title: cleanCardText(titleMatch ? titleMatch[1] : line.replace(/^\-\s+/, '')),
+                source: linkMatch ? cleanCardText(linkMatch[1]) : 'source',
+            };
+        })
+        .filter(item => item.title)
+        .slice(0, 5);
+}
+
+function deriveDailyTheme(markdown, sections, topSignals) {
+    const hackerNewsCount = topSignals.filter(item => /hackernews/i.test(item.source)).length;
+    if (hackerNewsCount >= 3) {
+        return '开源项目密集冒头，AI IDE 与 RAG 工具升温';
+    }
+
+    const mainline = String(markdown || '').match(/\*\*今日主线\*\*[：:]\s*(.+)/);
+    if (mainline?.[1]) return compactText(mainline[1], 34);
+
+    for (const sec of sections) {
+        const item = sec.items?.[0];
+        if (item?.summary) return compactText(item.summary, 34);
+    }
+
+    if (topSignals[0]?.title) return compactText(topSignals[0].title, 34);
+    return '今天 AI 圈最值得复盘的信号';
+}
+
 /**
  * 生成封面 HTML
  */
-function coverHtml(date, sectionCount, totalItems) {
+function coverHtml(date, sectionCount, totalItems, theme = '今天 AI 圈最值得看的信号') {
     const dateLabel = date.substring(5).replace('-', '.');
     return `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
@@ -209,20 +257,21 @@ body {
   width:${CARD_WIDTH}px; height:${CARD_HEIGHT}px;
   font-family:${FONT_STACK};
   overflow:hidden;
-  background:#f7f3ea;
+  background:#f8f4ec;
   color:#101828;
   position:relative;
 }
 .grain { position:absolute; inset:0; background-image:linear-gradient(rgba(16,24,40,.035) 1px, transparent 1px),linear-gradient(90deg,rgba(16,24,40,.035) 1px, transparent 1px); background-size:36px 36px; }
-.top-bar { position:absolute; top:0; left:0; right:0; height:14px; background:#ff4d3d; }
+.top-bar { position:absolute; top:0; left:0; right:0; height:18px; background:#ff4d3d; }
 .content { position:relative; z-index:1; padding:88px 72px; height:100%; }
 .badge { display:inline-block; background:#101828; color:#fff; border-radius:999px; padding:10px 22px; font-size:24px; font-weight:800; letter-spacing:1px; margin-bottom:34px; }
-.title { font-size:120px; font-weight:1000; letter-spacing:0; line-height:.95; color:#101828; margin-bottom:18px; }
+.title { font-size:116px; font-weight:1000; letter-spacing:0; line-height:.95; color:#101828; margin-bottom:18px; }
 .title-accent { color:#ff4d3d; }
-.date { font-size:44px; color:#475467; letter-spacing:2px; font-weight:800; margin-bottom:56px; }
-.hero-card { background:#fff; border:4px solid #101828; border-radius:8px; padding:34px 36px; box-shadow:12px 12px 0 #101828; margin-bottom:50px; }
-.hero-title { font-size:42px; line-height:1.25; font-weight:1000; margin-bottom:16px; }
-.hero-copy { font-size:27px; color:#475467; line-height:1.55; font-weight:600; }
+.date { font-size:42px; color:#475467; letter-spacing:2px; font-weight:800; margin-bottom:44px; }
+.hero-card { background:#fff; border:4px solid #101828; border-radius:8px; padding:36px 38px; box-shadow:12px 12px 0 #101828; margin-bottom:42px; }
+.hero-kicker { font-size:23px; color:#ff4d3d; font-weight:950; margin-bottom:14px; }
+.hero-title { font-size:43px; line-height:1.22; font-weight:1000; margin-bottom:18px; }
+.hero-copy { font-size:26px; color:#475467; line-height:1.5; font-weight:650; }
 .sections-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 22px; }
 .section-item { display:flex; align-items:center; gap:12px; background:#fff; border:2px solid #101828; border-radius:8px; padding:14px 16px; font-size:27px; font-weight:850; color:#101828; }
 .section-emoji { font-size:31px; }
@@ -238,8 +287,9 @@ body {
   <div class="title">AI<span class="title-accent">日报</span></div>
   <div class="date">${date}</div>
   <div class="hero-card">
-    <div class="hero-title">今天 AI 圈最值得看的信号</div>
-    <div class="hero-copy">${totalItems} 条精华，拆成 ${sectionCount} 个维度。适合收藏、复盘、找选题。</div>
+    <div class="hero-kicker">今日主线</div>
+    <div class="hero-title">${escHtml(theme)}</div>
+    <div class="hero-copy">先看 Top 5 判断方向，再翻板块卡找项目、工程抓手和机会窗口。</div>
   </div>
   <div class="sections-grid">
     <div class="section-item"><span class="section-emoji">🚀</span> 产品与功能更新</div>
@@ -258,6 +308,56 @@ body {
 </body></html>`;
 }
 
+function topSignalsCardHtml(topSignals, date) {
+    const rows = topSignals.map(item => `
+      <div class="rank-row">
+        <div class="rank">TOP ${item.rank}</div>
+        <div class="rank-content">
+          <div class="rank-title">${escHtml(compactText(item.title, 42))}</div>
+          <div class="rank-meta">${escHtml(item.source)}</div>
+        </div>
+      </div>`).join('\n');
+
+    return `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  width:${CARD_WIDTH}px; height:${CARD_HEIGHT}px;
+  font-family:${FONT_STACK};
+  overflow:hidden;
+  background:#101828;
+  color:#fff;
+  position:relative;
+}
+.grid { position:absolute; inset:0; opacity:.13; background-image:linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px),linear-gradient(90deg,rgba(255,255,255,.35) 1px, transparent 1px); background-size:40px 40px; }
+.content { position:relative; z-index:1; padding:70px 64px; height:100%; }
+.badge { display:inline-block; color:#101828; background:#ffdb4d; border:3px solid #fff; border-radius:999px; padding:9px 18px; font-size:22px; font-weight:950; margin-bottom:24px; }
+.title { font-size:64px; line-height:1.08; font-weight:1000; margin-bottom:14px; }
+.subtitle { font-size:27px; line-height:1.5; color:#d0d5dd; font-weight:650; margin-bottom:34px; }
+.rank-list { display:flex; flex-direction:column; gap:18px; }
+.rank-row {
+  display:grid; grid-template-columns:150px 1fr; gap:20px;
+  background:#fff; color:#101828; border:3px solid #fff; border-radius:8px;
+  padding:22px 24px; box-shadow:8px 8px 0 #ff4d3d;
+}
+.rank { align-self:start; background:#ff4d3d; color:#fff; border:3px solid #101828; border-radius:6px; padding:10px 8px; text-align:center; font-size:22px; font-weight:1000; }
+.rank-title { font-size:29px; line-height:1.24; font-weight:950; margin-bottom:10px; }
+.rank-meta { display:inline-block; color:#475467; background:#f2f4f7; border-radius:999px; padding:6px 14px; font-size:19px; font-weight:850; }
+.footer { position:absolute; bottom:42px; left:64px; right:64px; display:flex; justify-content:space-between; border-top:3px solid rgba(255,255,255,.75); padding-top:18px; font-size:20px; color:#eaecf0; font-weight:800; }
+</style>
+</head><body>
+<div class="grid"></div>
+<div class="content">
+  <div class="badge">先看这 5 条</div>
+  <div class="title">今日 Top 5<br>信号排名</div>
+  <div class="subtitle">按关注度、工程价值、趋势指向综合挑选。适合截图收藏。</div>
+  <div class="rank-list">${rows}</div>
+</div>
+<div class="footer"><span>AI日报 · ${date}</span><span>${BRAND_URL}</span></div>
+</body></html>`;
+}
+
 /**
  * 生成板块卡片 HTML（支持分页）
  */
@@ -268,7 +368,8 @@ function sectionCardHtml(page, date, globalIndex) {
         <span class="card-bullet"></span>
         <span class="card-subtitle">${escHtml(item.subtitle)}</span>
       </div>
-      <div class="card-body">${escHtml(item.summary)}</div>
+      <div class="label-row"><span>判断</span><p>${escHtml(item.summary)}</p></div>
+      <div class="label-row compact"><span>适合</span><p>${escHtml(SECTION_AUDIENCE[page.title] || '关注 AI 的读者')}</p></div>
     </div>`).join('\n');
 
     const pageLabel = page.totalPages > 1 ? ` (${page.pageNum}/${page.totalPages})` : '';
@@ -325,10 +426,11 @@ body {
   background:#ff4d3d; border:3px solid #101828; flex-shrink:0;
 }
 .card-subtitle { font-size:28px; line-height:1.25; font-weight:950; color:#101828; }
-.card-body {
-  font-size:23px; line-height:1.62;
-  color:#475467; padding-left:34px; font-weight:600;
-}
+.label-row { display:grid; grid-template-columns:68px 1fr; gap:12px; padding-left:34px; align-items:start; }
+.label-row + .label-row { margin-top:10px; }
+.label-row span { display:inline-block; color:#fff; background:#101828; border-radius:6px; padding:5px 8px; font-size:18px; line-height:1; font-weight:900; text-align:center; }
+.label-row p { font-size:22px; line-height:1.55; color:#475467; font-weight:650; }
+.label-row.compact p { color:#101828; font-weight:850; }
 .footer {
   position:absolute; bottom:40px; left:60px; right:60px;
   display:flex; justify-content:space-between; align-items:center;
@@ -360,6 +462,62 @@ body {
 </body></html>`;
 }
 
+function actionCardHtml(date, sections, topSignals) {
+    const ossItems = sections.find(s => s.title === 'Open-source Radar')?.items || [];
+    const oss = ossItems.find(item => !/top\s*5|排名表/i.test(item.subtitle))?.subtitle || topSignals[0]?.title || 'Top 5 项目';
+    const harness = sections.find(s => s.title === 'Harness Engineering')?.items?.[0]?.subtitle || 'Harness Engineering';
+    const opportunity = sections.find(s => s.title === '发现机会')?.items?.[0]?.subtitle || '机会窗口';
+
+    return `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  width:${CARD_WIDTH}px; height:${CARD_HEIGHT}px;
+  font-family:${FONT_STACK};
+  overflow:hidden;
+  background:#f8f4ec;
+  color:#101828;
+  position:relative;
+}
+.paper-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(16,24,40,.035) 1px, transparent 1px),linear-gradient(90deg,rgba(16,24,40,.035) 1px, transparent 1px); background-size:36px 36px; }
+.content { position:relative; z-index:1; padding:72px 64px; height:100%; }
+.kicker { display:inline-block; background:#101828; color:#fff; border-radius:999px; padding:10px 20px; font-size:23px; font-weight:950; margin-bottom:26px; }
+.title { font-size:66px; line-height:1.08; font-weight:1000; margin-bottom:18px; }
+.subtitle { font-size:28px; color:#475467; line-height:1.45; font-weight:650; margin-bottom:40px; }
+.todo { display:flex; flex-direction:column; gap:22px; }
+.todo-item { background:#fff; border:3px solid #101828; border-radius:8px; padding:26px 28px; box-shadow:9px 9px 0 rgba(16,24,40,.13); }
+.todo-head { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+.num { width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#ff4d3d; color:#fff; border:3px solid #101828; font-size:24px; font-weight:1000; }
+.todo-title { font-size:32px; font-weight:1000; }
+.todo-copy { font-size:24px; line-height:1.48; color:#475467; font-weight:650; padding-left:62px; }
+.footer { position:absolute; bottom:42px; left:64px; right:64px; display:flex; justify-content:space-between; border-top:3px solid #101828; padding-top:18px; font-size:20px; color:#475467; font-weight:850; }
+</style>
+</head><body>
+<div class="paper-grid"></div>
+<div class="content">
+  <div class="kicker">收藏后怎么用</div>
+  <div class="title">3 个复盘动作</div>
+  <div class="subtitle">别只看热闹，把今天的信号转成选题、项目和工程决策。</div>
+  <div class="todo">
+    <div class="todo-item">
+      <div class="todo-head"><div class="num">1</div><div class="todo-title">试一个项目</div></div>
+      <div class="todo-copy">${escHtml(compactText(oss, 48))}</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-head"><div class="num">2</div><div class="todo-title">查一处工程风险</div></div>
+      <div class="todo-copy">${escHtml(compactText(harness, 48))}</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-head"><div class="num">3</div><div class="todo-title">留一个机会假设</div></div>
+      <div class="todo-copy">${escHtml(compactText(opportunity, 48))}</div>
+    </div>
+  </div>
+</div>
+<div class="footer"><span>AI日报 · ${date}</span><span>${BRAND_URL}</span></div>
+</body></html>`;
+}
+
 /**
  * 生成所有卡片：封面 + 各板块（自动分页）
  */
@@ -376,6 +534,11 @@ async function generateCoverAndCards(date, sectionsOrMarkdown, outputDir) {
         sections = getDefaultSections();
     }
 
+    const topSignals = typeof sectionsOrMarkdown === 'string' ? extractTopSignals(sectionsOrMarkdown) : [];
+    const theme = typeof sectionsOrMarkdown === 'string'
+        ? deriveDailyTheme(sectionsOrMarkdown, sections, topSignals)
+        : '今天 AI 圈最值得复盘的信号';
+
     // 所有板块分页
     const allPages = [];
     let globalIdx = 1;
@@ -387,10 +550,11 @@ async function generateCoverAndCards(date, sectionsOrMarkdown, outputDir) {
         globalIdx++;
     }
 
-    // 小红书最多18张图
-    if (allPages.length + 1 > 18) {
+    // 小红书最多18张图：封面 + Top5 + 板块页 + 行动卡
+    const fixedCardCount = 1 + (topSignals.length ? 1 : 0) + 1;
+    if (allPages.length + fixedCardCount > 18) {
         // 合并最后几个板块如果超限
-        while (allPages.length + 1 > 18 && allPages.length > 7) {
+        while (allPages.length + fixedCardCount > 18 && allPages.length > 7) {
             const last = allPages.pop();
             const prev = allPages[allPages.length - 1];
             if (prev.title === last.title) {
@@ -426,22 +590,37 @@ async function generateCoverAndCards(date, sectionsOrMarkdown, outputDir) {
     try {
         // 封面
         const coverPath = path.join(outputDir, 'xhs_0_cover.png');
-        await page.setContent(coverHtml(date, sections.length, totalItems), { waitUntil: 'load', timeout: 15000 });
+        await page.setContent(coverHtml(date, sections.length, totalItems, theme), { waitUntil: 'load', timeout: 15000 });
         await page.screenshot({ path: coverPath, type: 'png', clip: { x: 0, y: 0, width: CARD_WIDTH, height: CARD_HEIGHT } });
         paths.push(coverPath);
         console.log(`  ✓ 封面图`);
+
+        if (topSignals.length) {
+            const topPath = path.join(outputDir, 'xhs_1_top5.png');
+            await page.setContent(topSignalsCardHtml(topSignals, date), { waitUntil: 'load', timeout: 15000 });
+            await page.screenshot({ path: topPath, type: 'png', clip: { x: 0, y: 0, width: CARD_WIDTH, height: CARD_HEIGHT } });
+            paths.push(topPath);
+            console.log(`  ✓ Top5 排名卡`);
+        }
 
         // 板块卡片
         for (let i = 0; i < allPages.length; i++) {
             const p = allPages[i];
             const safeTitle = p.title.replace(/[\s&]/g, '');
             const suffix = p.totalPages > 1 ? `_p${p.pageNum}` : '';
-            const cardPath = path.join(outputDir, `xhs_${i + 1}_${safeTitle}${suffix}.png`);
+            const imageIndex = i + 1 + (topSignals.length ? 1 : 0);
+            const cardPath = path.join(outputDir, `xhs_${imageIndex}_${safeTitle}${suffix}.png`);
             await page.setContent(sectionCardHtml(p, date, p.globalIndex), { waitUntil: 'load', timeout: 15000 });
             await page.screenshot({ path: cardPath, type: 'png', clip: { x: 0, y: 0, width: CARD_WIDTH, height: CARD_HEIGHT } });
             paths.push(cardPath);
             console.log(`  ✓ ${p.emoji} ${p.title}${suffix} (${p.items.length}条)`);
         }
+
+        const actionPath = path.join(outputDir, `xhs_${paths.length}_action.png`);
+        await page.setContent(actionCardHtml(date, sections, topSignals), { waitUntil: 'load', timeout: 15000 });
+        await page.screenshot({ path: actionPath, type: 'png', clip: { x: 0, y: 0, width: CARD_WIDTH, height: CARD_HEIGHT } });
+        paths.push(actionPath);
+        console.log(`  ✓ 行动清单卡`);
     } finally {
         await browser.close();
     }
@@ -462,12 +641,13 @@ function getDefaultSections() {
 }
 
 function escHtml(str) {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function cleanCardText(str) {
     return String(str || '')
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/show\s+hn:\s*/ig, '')
         .replace(/\*\*/g, '')
         .replace(/`/g, '')
         .replace(/^(分析思路与推演链条|分析推演链条|分析思路|推演链条)[：:]\s*/i, '')
@@ -503,6 +683,14 @@ function extractCoreSummary(body) {
     return '';
 }
 
+function compactText(text, maxLen) {
+    const cleaned = cleanCardText(text);
+    if (cleaned.length <= maxLen) return cleaned;
+    const cut = cleaned.substring(0, maxLen);
+    const lastPunc = Math.max(cut.lastIndexOf('，'), cut.lastIndexOf('、'), cut.lastIndexOf('：'));
+    return (lastPunc > 12 ? cut.substring(0, lastPunc) : cut).replace(/[，、：\s]+$/, '') + '…';
+}
+
 function resolveChromeExecutable(puppeteer) {
     const candidates = [
         process.env.PUPPETEER_EXECUTABLE_PATH,
@@ -520,4 +708,13 @@ function resolveChromeExecutable(puppeteer) {
     return typeof puppeteer.executablePath === 'function' ? puppeteer.executablePath() : undefined;
 }
 
-module.exports = { generateCoverAndCards, parseFullSections, paginateSection, coverHtml, sectionCardHtml };
+module.exports = {
+    generateCoverAndCards,
+    parseFullSections,
+    paginateSection,
+    coverHtml,
+    sectionCardHtml,
+    topSignalsCardHtml,
+    actionCardHtml,
+    extractTopSignals,
+};

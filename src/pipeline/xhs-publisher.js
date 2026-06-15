@@ -7,7 +7,7 @@
 
 const { execSync, spawnSync } = require('child_process');
 const path = require('path');
-const { generateCoverAndCards, parseFullSections } = require('./xhs-cards');
+const { generateCoverAndCards, parseFullSections, extractTopSignals } = require('./xhs-cards');
 
 // 板块 emoji 对照表
 const SECTION_EMOJIS = {
@@ -31,60 +31,36 @@ const SECTION_EMOJIS = {
  */
 function generateXhsContent(fullMarkdown, date) {
     const sections = parseFullSections(fullMarkdown);
+    const topSignals = extractTopSignals(fullMarkdown);
 
-    // 找当天最有冲击力的条目做标题——优先取完整短语（到冒号后截断）
-    let headline = '';
-    for (const sec of sections) {
-        for (const item of sec.items) {
-            if (item.subtitle.length > 8 && !headline) {
-                const quoted = item.subtitle.match(/“([^”]{4,12})”/);
-                if (quoted) {
-                    headline = quoted[1];
-                    break;
-                }
-                // 如果有冒号，取冒号前的短标题
-                const colonIdx = item.subtitle.indexOf('：');
-                if (colonIdx > 2 && colonIdx < 14) {
-                    headline = item.subtitle.substring(0, colonIdx);
-                } else {
-                    headline = item.subtitle.substring(0, 14);
-                }
-                break;
-            }
-        }
-        if (headline) break;
-    }
+    const mainline = extractMainline(fullMarkdown)
+        || sections.find(sec => sec.items?.length)?.items?.[0]?.summary
+        || topSignals[0]?.title
+        || '今天 AI 圈最值得复盘的信号';
+    const headline = makeXhsHeadline(mainline, topSignals[0]?.title);
     const dateStr = date.substring(5).replace('-', '.');
-    const title = headline
-        ? `⚡️${headline.substring(0, 14)}｜AI日报${dateStr}`
-        : `⚡️AI日报${dateStr}`;
+    const title = `⚡️${headline}｜AI日报${dateStr}`;
 
     let content = title + '\n\n';
-    content += '今天的 AI 信号我整理成卡片了，适合先看图速览，再回到正文抓重点。\n\n';
+    content += `${compactBrief(mainline, 72)}\n\n`;
+    content += '我把今天的 AI 信号整理成卡片：先看图抓方向，再看正文挑项目和机会。\n\n';
     content += '━━━━━━━━━━━━━━━━\n\n';
-    content += '🔥 今日最值得关注\n\n';
+    content += '🔥 今日 Top 5\n\n';
 
-    const highlights = [];
-    for (const sec of sections) {
-        const emoji = SECTION_EMOJIS[sec.title] || sec.emoji || '📌';
-        for (const item of sec.items.slice(0, 2)) {
-            highlights.push({ emoji, item });
-            if (highlights.length >= 8) break;
-        }
-        if (highlights.length >= 8) break;
-    }
-
-    for (const { emoji, item } of highlights) {
-        const brief = compactBrief(item.summary, 54);
-        if (!brief) continue;
-        content += `${emoji} ${compactTitle(item.subtitle, 24)}\n${brief}\n\n`;
+    const highlights = buildXhsHighlights(sections, topSignals);
+    for (const item of highlights.slice(0, 5)) {
+        content += `${item.emoji} ${item.title}\n${item.brief}\n\n`;
     }
 
     const datePath = date.replace(/-/g, '/');
     const reportLink = `ilovetochangetheworld.github.io/ai-daily-report/zh/${datePath}.html`;
 
     content += '━━━━━━━━━━━━━━━━\n\n';
-    content += '📌 卡片覆盖完整板块：产品、研究、行业、Open-source Radar、社区信号、Harness Engineering、机会。\n';
+    content += '📌 为什么要收藏\n\n';
+    content += '1. Top5 帮你快速判断今天的主线\n\n';
+    content += '2. Open-source Radar 适合直接找可试项目\n\n';
+    content += '3. Harness Engineering 用来检查工程落地风险\n\n';
+    content += '你最想让我明天重点盯哪类：模型、开源项目，还是 AI 工程化？\n\n';
     content += `🔗 完整日报：${reportLink}\n`;
 
     // 统计数据
@@ -285,31 +261,31 @@ async function generateXhsContentByLLM(fullMarkdown, date) {
         return `## ${emoji} ${sec.title}\n${items}`;
     }).join('\n\n');
 
-    const systemPrompt = `你是懂小红书科技内容分发的 AI 日报编辑。把日报整理成一篇小红书笔记正文。
+    const systemPrompt = `你是懂小红书科技内容分发的 AI 日报编辑。把日报整理成一篇适合配图发布的小红书笔记正文。
 
 输出要求：
 - 第一行是标题，20字以内，格式类似「⚡️主题｜AI日报MM.DD」
-- 开头用1句话说明"为什么值得看"，不要官方腔
-- 输出「🔥 今日最值得关注」并列出 6-8 条
-- 每条格式：emoji + 短标题 + 1句判断，不超过70字
+- 开头用2句话：第一句讲今日主线，第二句说明“先看图，再看正文”的阅读方式
+- 输出「🔥 今日 Top 5」并列出 5 条，不要超过 5 条
+- 每条格式：emoji + Top序号 + 短标题 + 换行 + 1句判断，不超过70字
 - 【关键】每条新闻之间必须空一行，确保小红书渲染时条目之间有清晰间距
-- 加一段「📌 为什么要收藏」：3个短句，强调复盘、选题、产品判断
-- 加一句评论区引导问题
+- 加一段「📌 为什么要收藏」：3个编号短句，分别强调主线判断、开源项目、工程落地
+- 加一句评论区引导问题，围绕“明天想看模型/开源/工程化哪类”
 - 末尾一行输出完整日报链接，格式固定为：「🔗 完整日报：ilovetochangetheworld.github.io/ai-daily-report/zh/${datePath}.html」
 - 不要编造来源、数据、公司名；不确定就写得克制
 - 不要输出 Markdown 表格，不要输出代码块
 - 不要在链接部分输出任何其他 URL 或多余文字
 
 格式示例：
-🔥 今日最值得关注
+🔥 今日 Top 5
 
-🚀 Claude Fable 5 发布
+🚀 Top1 Claude Fable 5 发布
 安全护栏下的神话级模型，代码工程能力质的飞跃
 
-🔬 SFT范式被打破
+🔬 Top2 SFT范式被打破
 传统对演示轨迹的严格拟合会破坏预训练先验
 
-🌍 Agent支付基建落地
+🌍 Top3 Agent支付基建落地
 百度布局Agent全球支付，标志从辅助工具向自主经济实体演进`;
 
     const userPrompt = `日期：${date}
@@ -346,6 +322,7 @@ function extractTitle(content) {
 function compactTitle(title, maxLen) {
     const cleaned = String(title || '')
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/show\s+hn:\s*/ig, '')
         .replace(/\*\*/g, '')
         .replace(/\s+/g, ' ')
         .trim();
@@ -355,6 +332,7 @@ function compactTitle(title, maxLen) {
 function compactBrief(summary, maxLen) {
     let brief = String(summary || '')
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/show\s+hn:\s*/ig, '')
         .replace(/[（(]\s*[）)]/g, '')
         .replace(/\*\*/g, '')
         .replace(/`/g, '')
@@ -382,6 +360,81 @@ function compactBrief(summary, maxLen) {
         brief = lastPunc > 12 ? brief.substring(0, lastPunc) + '…' : cut + '…';
     }
     return brief.replace(/[，；、\s]+$/, '');
+}
+
+function extractMainline(markdown) {
+    const match = String(markdown || '').match(/\*\*今日主线\*\*[：:]\s*(.+)/);
+    return match?.[1] ? compactBrief(match[1], 86) : '';
+}
+
+function makeXhsHeadline(mainline, fallback) {
+    const source = compactBrief(mainline || fallback || 'AI信号复盘', 22)
+        .replace(/^今日主线[：:]\s*/, '')
+        .replace(/^[“”"']+|[“”"']+$/g, '');
+    if (/show\s+hn/i.test(source)) return '开源项目爆发';
+    if (source.length <= 14) return source || 'AI信号复盘';
+
+    const firstClause = source.split(/[，。；｜|:：]/)[0];
+    if (/show\s+hn/i.test(firstClause)) return '开源项目爆发';
+    if (firstClause.length >= 6 && firstClause.length <= 14) return firstClause;
+    return source.substring(0, 14);
+}
+
+function buildXhsHighlights(sections, topSignals) {
+    if (topSignals.length) {
+        const byTitle = new Map();
+        for (const sec of sections) {
+            const emoji = SECTION_EMOJIS[sec.title] || sec.emoji || '📌';
+            for (const item of sec.items) {
+                byTitle.set(normalizeTitleKey(item.subtitle), { emoji, item });
+            }
+        }
+
+        return topSignals.map(signal => {
+            const matched = byTitle.get(normalizeTitleKey(signal.title));
+            const briefSource = matched?.item?.summary || sourceBasedBrief(signal);
+            return {
+                emoji: matched?.emoji || sourceBasedEmoji(signal),
+                title: `Top${signal.rank} ${compactTitle(signal.title, 22)}`,
+                brief: compactBrief(briefSource, 64),
+            };
+        });
+    }
+
+    const highlights = [];
+    for (const sec of sections) {
+        const emoji = SECTION_EMOJIS[sec.title] || sec.emoji || '📌';
+        for (const item of sec.items.slice(0, 1)) {
+            const brief = compactBrief(item.summary, 64);
+            if (brief) highlights.push({ emoji, title: compactTitle(item.subtitle, 24), brief });
+            if (highlights.length >= 5) break;
+        }
+        if (highlights.length >= 5) break;
+    }
+    return highlights;
+}
+
+function normalizeTitleKey(title) {
+    return String(title || '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/[^\p{Letter}\p{Number}\u4e00-\u9fa5]+/gu, '')
+        .toLowerCase()
+        .slice(0, 28);
+}
+
+function sourceBasedBrief(signal) {
+    const source = String(signal.source || '').toLowerCase();
+    if (source.includes('hackernews')) return '开发者社区正在验证的新项目，适合快速判断是否值得试用。';
+    if (source.includes('github')) return '开源动量明显，适合关注项目成熟度、生态位置和集成风险。';
+    if (source.includes('v2ex')) return '来自一线开发者讨论，适合观察真实预算、采购和落地摩擦。';
+    return '这是今天信号池里热度较高的一条，适合结合卡片继续复盘。';
+}
+
+function sourceBasedEmoji(signal) {
+    const source = String(signal.source || '').toLowerCase();
+    if (source.includes('hackernews') || source.includes('github')) return '⭐';
+    if (source.includes('v2ex') || source.includes('reddit') || source.includes('twitter')) return '💬';
+    return '📌';
 }
 
 /**
