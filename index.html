@@ -177,23 +177,23 @@
 <body>
 <div class="top-bar">
     <div class="brand">🤖 <span>AI 日报</span></div>
-    <div class="date-badge">📅 2026-10-23</div>
+    <div class="date-badge">📅 2026-10-24</div>
 </div>
 <div class="main-layout">
     <div class="content-area">
-        <div class="content-date-tag">📌 最新 · 2026-10-23 周四</div>
+        <div class="content-date-tag">📌 最新 · 2026-10-24 周五</div>
         <div class="markdown-body">
-            <h1>AI 资讯日报 2026-10-23</h1>
+            <h1>AI 资讯日报 2026-10-24</h1>
 <blockquote>
-<p>📰 Show HN: FastGraphRAG – Better RAG using | Show HN: Aide, an open-source AI native  — AI日报 2026-10-23</p>
+<p>📰 Show HN: FastGraphRAG – Better RAG using | Show HN: Aide, an open-source AI native  — AI日报 2026-10-24</p>
 </blockquote>
 <hr>
 <h2>🧭 今日决策摘要</h2>
 <ul>
 <li><strong>今日主线</strong>：Show HN: FastGraphRAG – Better RAG using | Show HN: Aide, an open-source AI native</li>
 <li><strong>读者优先级</strong>：先看「📌 Top 5 信号」判断方向，再看「⭐ Open-source Radar」找可试用项目，最后看「💻 Harness Engineering」评估工程落地。</li>
-<li><strong>信号分布</strong>：产品 19 条、研究 11 条、开源 31 条、Harness 7 条、行业 2 条、社区 0 条。</li>
-<li><strong>主要来源</strong>：OpenAI News、GitHub Release、Hugging Face Blog、Tim Rausch、Anand Logani、MIT Technology Review Events。</li>
+<li><strong>信号分布</strong>：产品 16 条、研究 18 条、开源 23 条、Harness 7 条、行业 5 条、社区 1 条。</li>
+<li><strong>主要来源</strong>：github、OpenAI News、Hugging Face Blog、Tim Rausch、Anand Logani、MIT Technology Review Events。</li>
 </ul>
 <hr>
 <h2>📌 今日 Top 5 信号</h2>
@@ -207,66 +207,33 @@
 <hr>
 <h2>🚀 产品与功能更新</h2>
 <ul>
-<li><strong>下一步观察：</strong> ... And if evidence strength weak/medium, include 「不确定性：...」. Where to put uncertainty? It says when weak/medium, must write a sentence. We can put it after core judgment or under 变化是什么/为什么重要. I&#39;ll put a line: <strong>不确定性：</strong> ... in the point (probably after core judgment or before 下一步观察). For strong point, no need. For point 2 if core is strong, no mandatory, but we discuss UI medium; we can still add a separate sentence noting UI uncertainty, but not the required 不确定性 if core strong. To be safe, for point 2 maybe mark core judgment as 强? Then no required uncertainty sentence. But I want to note UI uncertainty; I can say &quot;（补充：自定义 UI 目前仅 CEO 推文，证据强度中；不确定性：...）&quot; This includes the phrase. For point 3, core judgment 弱, must have 不确定性 sentence. Now Point 2: ### OpenAI 把 ChatGPT 推向“广告 + 自定义 UI + 低价决策 API”的应用平台，变现与分发策略同步改版 **核心判断（证据强度：强）：OpenAI 当天通过官方文章确认了 ChatGPT 的 LLM 广告栈，并以 Decisions API、合作分发标准与（CEO 推文所称的）</li>
+<li>变化是什么：渠道侧出现多模型终身买断包；同时开源社区出现本地优先 agent 客户端（Rowboat）和非 LLM 终端助手（TERMy）等替代方案。 - 为什么重要：若用户对订阅疲劳，聚合买断/本地优先可能影响长期留存与入口；但当前信号弱，不足以判定厂商定价转向。 - 谁该行动：用户/采购方应对“终身访问”保持警惕，核查是否官方授权；厂商需监测第三方转售对品牌/合规的影响。 - 下一步观察：该 Mashable 交易是否披露供应商；OpenAI/Anthropic/Google 是否发声明；Rowboat/TERMy 是否获得社区采用（GitHub stars/独立评测）。 - 不确定性：可能错在把第三方促销误读为厂商定价变化；$59.97 终身</li>
 </ul>
 <hr>
 <h2>🔬 前沿研究</h2>
-<ul>
-<li>[3] IBM Granite ensemble HF blog - [9] Canva image model TechCrunch Maybe also mention [11] Flint laptop-sized as small model? But Flint is in Point 1. To avoid duplication, in Point 2 we can say Flint&#39;s laptop-size also reflects efficiency trend, but we already cited it. Better not re-cite? We can just focus on 3 and 9. What about [11]? Already in Point 1. Good. Point 3 references: - [</li>
-</ul>
+<p>Point 1: Test-time reasoning &amp; agent planning (covers 17, 12/11, 13, 2, 10 maybe). Point 2: Frontier training/eval safety &amp; benchmark (covers 3, 16, 15, 14? maybe Dessa? no). Point 3: Inference/service/cost engineering (covers 18, 6,7,8,9,4,5). Then leftover 1 and 14. We still need place for 14 and 1. Could mention 14 in Point 2 as a training-method signal? Actually Dessa is a model trained from scratch on human conversation. It is a training method innovation. We can include it in Point 2? Point 2 title could be &quot;前沿训练/评测：安全围栏、对齐压力测试与替代训练语料同时出现&quot;. Evidence: OpenAI security (strong), Anthropic alignment/rogue (medium), Kimi benchmark (medium), Block Dessa trained from scratch on human conversation (medium/weak? The Verge single source). We can discuss that training-method innovation is appearing: Dessa claims trained from scratch on nothing but human conversation, indicating a voice/speech-native conversational model; but evidence is a single media report, no weights/paper, so弱/中. We&#39;ll mark overall point evidence? The core judgment for point 2 maybe 强 for safety/eval trend, but includes Dessa weak; we can write uncertainty for Dessa. That covers 14. Good. Signal 1 ziwei-doushu: It is a GitHub trending repo, but not AI frontier. We can mention it in the main line or as a note in Point 1? It&#39;s a symbolic algorithm + knowledge base. It doesn&#39;t fit frontier research. To account for it, we can add a sentence in the main line or after points? Perhaps in the first line main line, we can say &quot;（同日 trending 的紫微斗数排盘引擎属于垂直符号算法/知识库开源，并非本维度前沿主线，仅作噪声排除）&quot;. But the first line must be one sentence summarizing main line. We can include a parenthetical: &quot;；ziwei-doushu 等垂直符号引擎属噪声，不计入主线。&quot; That accounts for signal 1. Or</p>
 <hr>
 <h2>🌍 行业展望与社会影响</h2>
-<p><strong>本板块主线：</strong> 前沿AI正从“模型能力</p>
+<ol>
+<li>产品事实：<a target="_blank" rel="noopener" href="url">TechCrunch</a> 报道 1Password 新功能允许 AI 代理代表用户登录客户个人账户，同时保护私有凭证；其机制应是代理获得受限的委托/令牌化访问，而非明文密码。   2. 为什么重要：如果 AI 代理要真正执行订票、购物、客服、报销等“登录后”的任务，凭证暴露是最大摩擦与风险；凭证隔离把密码从 agent 上下文中移除，降低泄露与滥用责任，是 agentic 商业化的门禁。   3. 推演：代理经济扩张 → 平台需要“代表用户操作但不掌握主凭证”的能力 → 密码管理器/IAM 从“人登录”扩展到“代理登录” → 1Password 这类厂商获得新的企业/消费者付费点，IAM 厂商（Okta、Microsoft Entra、Google）与 AI 平台可能跟进或收购。   4. 与十亿用户主线的关系：OpenAI 的 10 亿用户（<a target="_blank" rel="noopener" href="url">OpenAI News</a>）是代理登录的潜在调用方；若 ChatGPT 或 Operator 类代理接入此类能力，凭证安全将从个人工具变成平台级需求。 <strong>不确定性：</strong> 该判断主要基于单一媒体报道和单产品发布，缺乏采纳数据、客户名单、与 OpenAI/Anthropic 的集成证据；代理登录仍可能受网站反自动化（CAPTCHA、ToS 禁止）、责任归属（代理误操作/超额权限）和令牌泄露风险限制，因此“成为必要中间件”目前只是趋势而非</li>
+</ol>
 <hr>
 <h2>⭐ Open-source Radar</h2>
-<ul>
-<li>DietrichGebert/ponytail: today 1948, total 173,819, push Oct 18. Momentum high, scale very high, relevance high, maturity: push 5 days ago, issues 94 low. Credibility: single but massive. Overall #1 or #2. I&#39;d put ponytail #1? Cloudflare has higher today stars but lower total and older push. Ponytail has 173k total vs 39k, and push 5 days ago vs 5 weeks ago. Ponytail scale 4x, maturity better (recent push). Momentum: cloudflare 2979 &gt; ponytail 1948, but ponytail still huge. Relevance both agent. I think ponytail #1 (规模+动量+近期更新), cloudflare #2 (今日增量第一，官方安全skill，但代码久未更新). Or cloudflare #1 because今日stars最高 and security主线强. Let&#39;s decide: The主线 is Agent安全与沙箱。Cloudflare skill + Claude Code sandbox fix + OpenAI Patch the Planet. Cloudflare repo today stars 2979 is the highest momentum and directly security. It deserves #1 because it encapsulates the day&#39;s hottest surge and official credibility. Ponytail #2. - Graphify: today 1408, total 133,206, push Oct 22 (yesterday). Scale 133k, momentum high, relevance RAG/agent skill, maturity recent push, credibility trending. #3. - supabase: today 693, total 113,575, push today. Scale 113k, momentum moderate, relevance backend for AI apps (medium), maturity high (push today), credibility high. #4 maybe. But compare with claude-mem (total 102k, push today, relevance agent memory high, no today stars). Since supabase has actual today stars 693 and trending, it has proven momentum; claude-mem not trending, no today stars. So supabase #4. - anthropics/knowledge-work-plugins: today 303, total 31,736, push Oct 22. Official Anthropic, relevance: Claude Cowork plugins for knowledge workers (Agent/LLM), maturity recent push, issues low. Scale lower but official and relevant. #5. Could claude-howto (total 43k, today 177) outrank? knowledge-work-plugins has higher today stars (303 vs 177), official source, total 31k vs 43k (claude-howto higher total but lower today stars and not official). Relevance: both Claude Code related. knowledge-work-plugins is official plugins, more credible. So #5 knowledge-work-plugins. But wait, what about claude-mem? It has total 102k, push today, relevance agent memory. It didn&#39;t have today stars because not in trending, but its scale is close to supabase (102k vs 113k) and relevance higher (Agent memory vs Postgres). If we use规模+近期更新, claude-mem push today, supabase push today. Supabase today stars 693, claude-mem unknown. Since claude-mem not trending, momentum lower. But the table is &quot;今日 TOP 5 排名表&quot; - maybe should include today&#39;s hot trending projects. The github_search repos are not &quot;今日热门&quot; but &quot;搜索发现&quot; maybe for context. The板块额外要求 says &quot;聚焦：GitHub热门新项目、重大版本发布、社区动态。&quot; The &quot;今日 TOP 5&quot; likely from hot projects. I&#39;ll keep TOP5 as the five github_trending projects with highest today stars, because they have clear今日动量. But I should mention in trend analysis the large-scale github_search repos (rea, ECC, claude-mem, etc.) as context, not in TOP5. That satisfies &quot;不要把普通项目新闻写成 TOP</li>
-</ul>
+<p>So signals cover: Agent runtime/security, agent memory, agent plugins/skills, agent frameworks, vertical agents, web data, local-first notebook, open-source model release (Chinese intent model), agent training (RL rewards), research agents, prompt dataset, Codex CLI Rust rewrite, Claude Code monitoring. The strongest cross-cutting主线: <strong>开源 Agent 栈正在“生产化补全”：安全沙箱与监控（NVIDIA/OpenShell、Claude Code 沙箱修复与 Monitor、Cloudflare 审计技能、Andrew Ng 谈 hack）解决可信问题；记忆与插件（claude-mem、knowledge-work-plugins、nanobot）解决能力延续与复用问题；而大量垂直/框架仓库（rea、hermes、firecrawl 等）的高星与今日更新说明 Agent 已从 demo 走向大规模基础设施。</strong> But we need one sentence for 本板块主线. Maybe: <strong>本板块主线：在真实安全事件与官方运行时/监控发布推动下，开源 Agent 生态今天的重心从“模型与 demo”转向“可信运行时”——沙箱、监控、安全技能与跨会话记忆同时成为基础设施级热点。</strong> That is one sentence (though long). Good. Then TOP 5 table. Let&#39;s decide final 5 with ranking: Ranking 1: <strong>cloudflare/security-audit-skill</strong> or <strong>NVIDIA/OpenShell</strong>? Let&#39;s compute综合: - security-audit-skill: 动量 today 2716 (最高), 规模 total 42,473 (中等偏上), 相关性 Agent 安全技能 (强), 成熟度: issues 83 (低，良好), 但最近 push 2026-09-14 (陈旧，扣成熟度), 可信度 Cloudflare 官方 + 与 Andrew Ng/OpenWorker 网络安全工作流、Claude-Red 同源 (强). 综合: 极高动量+官方+</p>
 <hr>
 <h2>💬 社区信号与反共识</h2>
-<p>**本板块主线：**今日社区维度真正的信号是“无声”——观点碰撞退潮，主线从大V情绪转向尚未被公开讨论的开发者集成摩擦与用户采用阻力，反共识机会存在于预期差而非共识热度。</p>
-<p>（说明：本维度今日输入为0条信号，且当前消息未附其他维度具体数据；以下为基于跨维度关联框架的弱证据前瞻，未引用/未编造社区原文链接。所有分析点证据强度均为弱。）</p>
-<h3>1. 无声不是无需求：开发者痛点先于大V共识，真实需求信号藏在集成摩擦里</h3>
-<p>**核心判断（证据强度：弱）：**在假设其他维度出现“开发/集成活跃度上升但采用/留存遇阻”的背离时，今日社区零热议更可能意味着真实需求信号尚未被情绪化，反共识主线应提前定价开发者痛点，而非等待大V叙事。</p>
-<p>展开分析：</p>
 <ul>
-<li>得出方式：本维度直接信号为0，公开社区无大V观点碰撞。按社区信号与反共识的历史传导链，真实需求往往先出现在开发者/集成方的一手摩擦（SDK、文档、工具链、跨链/onboarding），经一段时间后才被KOL转化为社区情绪；因此“现在没声音”可能只是传导滞后，不是需求不存在。</li>
-<li>依据与推演链条：若其他维度（开发活动、代码仓库、链上漏斗等）显示提交/集成需求增加，而用户激活或留存出现流失 → 摩擦先在开发者渠道积累 → 社区大V尚未将其叙事化 → 形成“无声的预期差”。真实需求信号 = 可复现、可量化的开发者痛点（如某类集成重复失败、文档缺口导致工单重复）；情绪噪音 = 未来若出现的“赛道爆发/千万用户将涌入”类泛化叙事。因今日无直接信号，不引用具体来源链接。</li>
-<li>实战含义：优先去代码仓库 issue、开发者 Discord/集成方访谈中找重复抱怨，而不是等推特共识形成后再行动。</li>
-<li>不确定性：可能错在：当前对话未提供其他维度数据，所谓“开发/采用背离”只是条件假设；若其他维度实际无背离，社区沉默可能只是市场冷淡、假期或注意力转移，真实需求并不存在，此判断应立即弱化。</li>
-</ul>
-<h3>2. 反共识不在热度，而在被低估的用户采用阻力</h3>
-<p>**核心判断（证据强度：弱）：**若其他维度显示用户转化/留存存在阻力，则当前公开情绪尚未计入摩擦成本，反共识做法是关注“没人讨论但影响采用”的阻力，而不是社区热度本身。</p>
-<p>展开分析：</p>
-<ul>
-<li>得出方式：社区0信号意味着缺乏对采用阻力的公开定价。用户采用阻力（onboarding、gas/费用抽象、跨链桥、法币出入金、签名/权限复杂度）通常在产品与链上维度先表现为漏斗流失；社区要等KOL吐槽才形成噪音。</li>
-<li>依据与推演链条：其他维度若出现注册→激活→留存漏斗的异常流失，或重复出现的支持工单 → 采用阻力真实存在 → 但社区无热议 → 市场情绪与真实成本脱节 → 产生预期差。真实需求信号 = 漏斗中可定位的流失步骤与复现路径；情绪噪音 = “用户体验差”的笼统抱怨，或相反“采用即将爆发”的喊单。无一手链接可引用。</li>
-<li>不确定性：可能错在：流失可能由宏观、季节、激励结束等非产品摩擦因素导致；若后续链上/产品数据修复且社区仍无讨论，则“阻力被低估”不成立，沉默就是无需求。</li>
-</ul>
-<h3>3. 最大风险：把“无噪音”误读为“干净筹码/潜伏需求”</h3>
-<p>**核心判断（证据强度：弱）：**今日最需警惕的反身性错误，是把社区沉默自动解读为“需求潜伏或共识干净”，实际上沉默也可能意味着注意力撤离或共识已极端一致。</p>
-<p>展开分析：</p>
-<ul>
-<li>得出方式：0信号有两种相反解释：信号未传播（需求潜伏）或根本无事件（无需求）。区分二者必须依赖其他维度是否出现背离；当前输入未提供其他维度数据，因此只能作为风险提示，而非定论。</li>
-<li>依据与推演链条：若价格/开发/采用等维度同样平淡 → 沉默=无信号，反共识不成立；若仅社区平淡而其他维度背离 → 沉默才有预期差。真实需求信号必须有一手可验证来源（代码仓、链上漏斗、官方发布等）；情绪噪音是“沉默即利好”的叙事。</li>
-<li>观察点：在看到开发者渠道重复痛点或链上漏斗流失的可复现证据前，不应把本板块弱推演当定论。</li>
-<li>不确定性：可能错在：若市场处于强趋势中，沉默可能只是共识高度一致而非缺乏信号；本判断依赖未提供的跨维度数据，若数据相反则证伪。</li>
+<li>Core judgment line format: yes, exactly. - Evidence strength: 中/弱/中. Good. - 展开分析说明怎么得出、依据、推演链条: yes, &quot;依据&quot;, &quot;推演链条&quot; bullets. - 弱或中必须写「不确定性：...」: Point 1 (中) has 不确定性; Point 2 (弱) has 不确定性; Point 3 (中) has 不确定性. Yes. - Not every point has 反向视角/实战建议: Point 1 has 反向视角, Point 3 has 实战建议, Point 2 has neither. Good,</li>
 </ul>
 <hr>
 <h2>💻 Harness Engineering</h2>
-<p>对开发团队的流程影响：** 平台/基础设施团队要把“agent 上线”等同于“服务上线”：建立工具注册中心、权限审批流、轨迹回放与回归评测；业务团队在引入全员 Workspace 时，不能只做账号开通，而要先定义数据边界与高风险操作黑名单。FDE 与内部平台团队的接口会成为新的协作流程。 <strong>安全与可靠性风险：</strong> 现场定制若没有统一权限基座，容易出现每个客户/部门一套临时授权，导致权限蔓延和审计碎片化；缺少回放能力时，一次错误 agent 行为无法复现，事故复盘只能靠日志猜测；30k 规模下，提示注入或过度授权可能通过共享工作台跨部门扩散。可靠性上，agent 从“辅助”变成“默认入口”后，其停机或错误输出会直接阻断业务流程，SLA 与降级方案必须提前设计。 Do we need a third point? The prompt says generate 2-3. Two is acceptable. But maybe we can add a short third point about &quot;噪音信号排除与相邻议题&quot; ? No, analysis points should be analytical, not meta. We already have a filtering note. Two points is fine. But to be safe, maybe 3 points? The user said &quot;生成 2-3 个分析点&quot;. Two satisfies. And &quot;不要平均分配篇幅&quot; means Point 1 long, Point 2 shorter? Actually Point 1 is main line, should be longer. Point 2 is secondary, maybe similar length but less? In my draft both are long. We can make Point 1 the longest (main), Point 2 a bit shorter. That&#39;s okay. We don&#39;t need a third. Wait, check if we need to include &quot;反向视角&quot; or &quot;实战建议&quot;? The instruction: &quot;不是每条都要写「反向视角」「实战建议」，只有确实有洞察价值时才写，不要凑模板&quot;. So we can omit them. We didn&#39;t include them, good. Need ensure we don&#39;t use weak evidence as conclusion. For</p>
+<p>Then展开分析 paragraph. Then #### 工程瓶颈 etc. Wait, the requirement: &quot;每个分析点以 ### 开头，包含简明标题&quot;. The heading itself is the title. Then &quot;每个分析点先给出一句核心判断，格式必须是：<strong>核心判断（证据强度：强/中/弱）：...</strong>&quot;. So immediately after ### heading, the next line should be the core judgment. Yes. Then &quot;展开分析时必须说明：你是怎么得出判断的、依据是什么、推演链条是什么&quot;. So after core judgment, I write a paragraph &quot;展开分析：&quot; or just prose. I&#39;ll write &quot;<strong>依据与推演：</strong>&quot; then text. Then the four subheadings. Let&#39;s draft Analysis Point 1 text. <strong>核心判断（证据强度：强）：</strong> Agent 开发正从“模型/提示词调用”升级为“工程师在循环中主动塑造构建”的制度化实践；OpenAI 的 Forward Deployed Engineering、Andrew Ng 的 AI Engineering 技能、Uber 全员上线 ChatGPT Work 与 Aide 的 AI-native IDE 共同证明，harness、工具调用协议、沙箱与评测回放已成为企业 agent 规模化的核心工程底座。 依据与推演：我怎么得出判断？依据有四：OpenAI 官方把 FDE 定义为把工程师前置到部署现场、直接影响“构建什么”和交付 loop <a target="_blank" rel="noopener" href="https://openai.com/index/forward-deployed-engineering-means">OpenAI News</a>；Andrew Ng 明确指出 AI Engineering 技能是“actively shape the build... drive the build loop” <a target="_blank" rel="noopener" href="https://x.com/i/status/2098459474608672916">Andrew Ng</a>；Uber 将 ChatGPT Work 从试点扩至 3 万员工，意味着 agent 进入全员工作流，必须处理权限、工具与可靠性 <a target="_blank" rel="noopener" href="https://techcrunch.com/2026/10/22/uber-puts-all-30000-employees-on-chatgpt-work/">TechCrunch</a>；Aide 以开源 AI-native IDE 把 agent 直接嵌入开发环境，是 harness 在 IDE 侧的产品化 <a target="_blank" rel="noopener" href="https://aide.dev/">Aide</a>。推</p>
 <hr>
 <h2>💡 发现机会</h2>
-<p><strong>本板块主线：</strong> 在今日无直接信号的情况下，本板块只能把技术成熟度（AI代理工具调用）、劳动力结构（护理/服务业缺口）与合规责任（AI决策留痕）三条弱关联趋势外推，共同指向“垂直行业AI代理的可信执行层”这一未确认的创业主线，而非已出现的新风口。</p>
-<blockquote>
-<p>说明：输入中未包含其他维度信号条目与原始链接，本次也未引用任何具体信号，因此不构造来源URL；若后续补充其他维度信号，应在此类引用处回填 <code>[来源名](URL)</code>。以下所有分析点证据强度均为弱，并附不确定性。</p>
-</blockquote>
-<h3>主线：垂直行业 AI 代理的“可信执行层”是劳动力缺口与合规压力共同指向的创业主线</h3>
-<p><strong>核心判断（证据强度：弱）：到2026年，模型能力不再是垂直AI代理落地的首要瓶颈，真正的市场空白是“可审计、可回滚、可计价”的执行中间件，尤其在受劳动力短缺与强合规双重挤压的中小医疗/养老/财税机构。</strong></p>
-<p>推演链条与依据：我得出该判断的路径</p>
+<p>为什么现在：<strong>为什么现在：</strong> Agent 框架与模型调用成本已使“执行”技术可行，但企业从 POC 转向生产环境时必须有日志、回滚与责任划分；能力就绪与合规强制之间的时间差，正是中间层的切入窗口。 验证方式：<strong>验证方式：</strong> 选 1–2 个高频、规则清晰且错误可量化的流程（如发票对账、退款审核），做 6–8 周试点：对比纯人工、纯 Agent、Agent+审计中间层的完成率、错误率、单次成本与审计耗时；若中间层把错误追溯从天级降到分钟级，且客户愿为“可审计”付溢价，则验证成立。 主要风险：<strong>主要风险：</strong> 大厂（微软、Salesforce、ServiceNow 等）把编排/审计内嵌进现有 SaaS，创业公司被管道化；企业 POC 多但生产转化慢；按结果计费让创业公司承担过多执行风险，毛利被拖垮。 实战建议：<strong>实战建议：</strong> 先绑定一个垂直行业（如跨境电商财务对账）做“审计+计费”插件，而不是做通用 Agent 平台；通过 SI 伙伴分发，避免与大厂争夺通用编排入口。 不确定性：<strong>不确定性：</strong> 这个判断可能错在——如果 2026 年企业仍只把 Agent 用于低风险辅助（如草稿生成）而不进入核心</p>
 <hr>
-<p><em>报告生成时间：2026-10-23</em></p>
-<p><em>数据来源：OpenAI News、GitHub Release、Hugging Face Blog、Tim Rausch、Anand Logani、MIT Technology Review Events、MIT Technology Review Insights、Matthias Bastian、Ivan Mehta、Tim Fernholz、Aditya Mehta、hackernews、github、huggingface、@AndrewYNg、Jay Peters、<a target="_blank" rel="noopener" href="mailto:news-webmaster@google.com">news-webmaster@google.com</a>、量子位的朋友们、@sama、Lucas Ropek、@ChrisMurphyCT、@Dogi1313、@elonmusk、Ellen Thomas、Maximilian Schreiner、Zack Whittaker</em></p>
+<p><em>报告生成时间：2026-10-24</em></p>
+<p><em>数据来源：github、OpenAI News、Hugging Face Blog、Tim Rausch、Anand Logani、MIT Technology Review Events、MIT Technology Review Insights、Tim Fernholz、Ivan Mehta、GitHub Release、Jay Peters、Emma Roth、Matthias Bastian、arXiv、hackernews、huggingface、@AndrewYNg、量子位的朋友们、v2ex、@sama、Lucas Ropek、<a target="_blank" rel="noopener" href="mailto:news-webmaster@google.com">news-webmaster@google.com</a>、David Pierce、@jon_barron、@elonmusk、Aditya Mehta、Zack Whittaker、Lauren Forristal</em></p>
 
         </div>
         <div class="content-footer">
@@ -283,6 +250,13 @@
                 </div>
                 <div class="month-items">
                     <a class="timeline-item active" 
+                                   href="./zh/2026/2026-10-24.html" 
+                                   target="_blank" rel="noopener"
+                                   data-date="2026-10-24"
+                                   title="AI 日报 2026-10-24">
+                            <span class="day-num">24日</span>
+                            <span class="day-week">周五</span>
+                        </a><a class="timeline-item" 
                                    href="./zh/2026/2026-10-23.html" 
                                    target="_blank" rel="noopener"
                                    data-date="2026-10-23"
